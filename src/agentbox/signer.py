@@ -30,9 +30,14 @@ def load_or_create_key(path=None) -> bytes:
 
 
 class ChainWriter:
-    def __init__(self, path, key: bytes):
+    def __init__(self, path, key: bytes, overwrite: bool = False):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if self.path.exists() and self.path.stat().st_size > 0:
+            if not overwrite:
+                raise FileExistsError(
+                    f"Log already exists: {self.path}. Use a new session id or pass overwrite=True.")
+            self.path.write_text("")
         self.key, self.seq, self.prev = key, 0, GENESIS
 
     def append(self, event_type: str, data: dict) -> dict:
