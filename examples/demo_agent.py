@@ -1,7 +1,7 @@
 """A fake 'agent' that gets stuck retrying a failing command."""
 from agentbox import Recorder
 
-rec = Recorder("demo", workspace="./workspace", log_dir="./runs")
+rec = Recorder("demo", workspace="./workspace", log_dir="./runs", overwrite=True)
 
 script = [
     ("Let me create a file first.", "echo 'print(1/0)' > main.py"),
