@@ -15,12 +15,16 @@ agentbox verify runs/demo.ndjson
 pytest
 ```
 
-## Threat model (v0.1, honest)
-The signing key is stored at `~/.agentbox/key`. In v0.1 the agent runs as the same OS user,
-so a malicious agent could read it. Real isolation (Docker, separate user) is the v0.2 goal.
+## Threat model
+- **Docker backend (v0.2):** commands run in a container with no network, a read-only
+  filesystem, all Linux capabilities dropped, a non-root user, and CPU/memory/process limits.
+  The signing key and logs stay on the host and are never mounted into the container.
+- **Local backend (v0.1):** no isolation. The agent runs as your user and could read the key.
+  Use it only for trusted experiments.
+- Docker isolation is strong but not a perfect boundary. Run untrusted agents in a disposable VM.
 
 ## Roadmap
-- [ ] v0.2 Docker sandbox backend, key isolated from the agent
+- [x] v0.2 Docker sandbox backend, key isolated from the agent
 - [ ] Network egress capture
 - [ ] Semantic drift detector
 - [ ] Replay UI
