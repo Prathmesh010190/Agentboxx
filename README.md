@@ -129,6 +129,18 @@ rec.close("done")                        # also stops the container
 
 Warnings become hints for the model. Critical severity (for example five identical repeats) stops the run.
 
+## Error signatures
+
+Repeated-error detection compares normalized error signatures, so the same failure matches even when line numbers, file paths or runtime versions differ.
+
+| Language | Recognized output | Signature class |
+|---|---|---|
+| Python | Tracebacks | Exception name, e.g. `ZeroDivisionError` |
+| Node.js | Uncaught errors with stack frames | e.g. `TypeError`, `Error[ERR_MODULE_NOT_FOUND]` |
+| Go | Panics, fatal errors, compile errors | `GoPanic`, `GoFatalError`, `GoCompileError` |
+
+Anything else falls back to hashing the last lines of stderr. To add a language, see `src/agentbox/error_signatures.py`.
+
 ## Threat model
 
 - **Docker backend:** commands run as a non-root user in a container with no network, a read-only root filesystem, all Linux capabilities dropped, `no-new-privileges`, and CPU, memory and process limits. The signing key and logs stay on the host and are never mounted into the container.
@@ -141,6 +153,7 @@ Warnings become hints for the model. Critical severity (for example five identic
 - Detector thresholds are initial values, not calibrated on real agent traces.
 - No network capture yet (the sandbox simply has no network).
 - No semantic drift detection yet; detection is command and state based.
+- Error signatures cover Python, Node.js and Go only. Other languages use a generic fallback.
 - The recorder appends to an existing log file, which breaks verification ([#3](https://github.com/Prathmesh010190/Agentboxx/issues/3)).
 
 ## Roadmap
@@ -149,6 +162,7 @@ Warnings become hints for the model. Critical severity (for example five identic
 - [x] Docker sandbox backend
 - [x] Loop detection with hint feedback
 - [x] ReAct-style agent loop
+- [x] Stable error signatures for Python, Node.js and Go
 - [ ] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
 - [ ] Network egress capture
 - [ ] Semantic drift detector
