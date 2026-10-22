@@ -8,3 +8,4 @@ dist/
 runs/
 workspace/
 .env
+workspace-docker/
