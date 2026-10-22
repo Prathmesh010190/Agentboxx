@@ -32,7 +32,8 @@ class LoopDetector:
         return {"kind": kind, "severity": severity, "count": count, "hint": hint}
 
     def _exact(self, s):
-        n = sum(1 for x in self.win if x["command_fingerprint"] == s["command_fingerprint"])
+        n = sum(1 for x in self.win if x["command_fingerprint"] == s["command_fingerprint"]
+                and x["workspace_hash"] == s["workspace_hash"])   # same command on unchanged files
         if n >= self.cfg.exact_crit:
             return [self._sig("loop.exact", "critical", n, "Same command repeated. Stop and change approach.")]
         if n >= self.cfg.exact_warn:
