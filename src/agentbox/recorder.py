@@ -8,17 +8,22 @@ from .signer import ChainWriter, load_or_create_key
 
 class Recorder:
     def __init__(self, session_id: str, workspace: str = "./workspace",
-                 log_dir: str = "./runs", key_path=None, loop_cfg: LoopConfig | None = None):
-        self.session_id, self.workspace = session_id, workspace
+                 log_dir: str = "./runs", key_path=None,
+                 loop_cfg: LoopConfig | None = None, sandbox=None):
+        self.session_id, self.workspace, self.sandbox = session_id, workspace, sandbox
         self.log_path = Path(log_dir) / f"{session_id}.ndjson"
         self.writer = ChainWriter(self.log_path, load_or_create_key(key_path))
         self.detector = LoopDetector(loop_cfg)
         self.step_index = 0
-        self.writer.append("session.start", {"session_id": session_id})
+        isolation = sandbox.describe() if sandbox else {"backend": "local"}
+        self.writer.append("session.start", {"session_id": session_id, "isolation": isolation})
 
     def run(self, command: str, thought: str = "", timeout_s: int = 60) -> dict:
         self.step_index += 1
-        obs = run_command(command, self.workspace, timeout_s)
+        if self.sandbox:
+            obs = self.sandbox.run(command, timeout_s)
+        else:
+            obs = run_command(command, self.workspace, timeout_s)
         step = {"session_id": self.session_id, "step_index": self.step_index,
                 "thought": thought, **obs}
         self.writer.append("step", step)
@@ -29,3 +34,5 @@ class Recorder:
 
     def close(self, reason: str = "done"):
         self.writer.append("session.end", {"reason": reason, "steps": self.step_index})
+        if self.sandbox:
+            self.sandbox.stop()
