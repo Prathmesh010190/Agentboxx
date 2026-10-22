@@ -58,7 +58,7 @@ class LoopDetector:
             else:
                 break
         failing = sum(1 for x in steps[-run:] if x["exit_code"] != 0)
-        if run >= self.cfg.no_progress_warn and failing >= run // 2:
+        if run >= self.cfg.no_progress_warn and failing >= max(1, int(run * 0.8)):
             return [self._sig("loop.no_progress", "warn", run, "No files changed across several failing steps.")]
         return []
 
