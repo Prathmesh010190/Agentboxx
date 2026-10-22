@@ -5,6 +5,8 @@ import re
 import subprocess
 import time
 
+from .error_signatures import extract_go, extract_node
+
 _NORMALIZERS = [
     (re.compile(r"0x[0-9a-fA-F]+"), "<HEX>"),
     (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"), "<UUID>"),
@@ -29,6 +31,11 @@ def fingerprint(text: str) -> str:
 def error_signature(stderr: str, exit_code: int):
     if exit_code == 0 or not stderr.strip():
         return None, None
+    if "Traceback (most recent call last)" not in stderr:
+        found = extract_go(stderr) or extract_node(stderr)
+        if found:
+            cls, msg = found
+            return f"{cls}:{fingerprint(cls + ' ' + msg)}", cls
     last = [l for l in stderr.strip().splitlines() if l.strip()][-3:]
     classes = _ERR_CLASS.findall(stderr)
     cls = classes[-1] if classes else None
