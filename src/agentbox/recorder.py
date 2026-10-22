@@ -9,10 +9,11 @@ from .signer import ChainWriter, load_or_create_key
 class Recorder:
     def __init__(self, session_id: str, workspace: str = "./workspace",
                  log_dir: str = "./runs", key_path=None,
-                 loop_cfg: LoopConfig | None = None, sandbox=None):
+                 loop_cfg: LoopConfig | None = None, sandbox=None,
+                 overwrite: bool = False):
         self.session_id, self.workspace, self.sandbox = session_id, workspace, sandbox
         self.log_path = Path(log_dir) / f"{session_id}.ndjson"
-        self.writer = ChainWriter(self.log_path, load_or_create_key(key_path))
+        self.writer = ChainWriter(self.log_path, load_or_create_key(key_path), overwrite=overwrite)
         self.detector = LoopDetector(loop_cfg)
         self.step_index = 0
         isolation = sandbox.describe() if sandbox else {"backend": "local"}
