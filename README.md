@@ -154,7 +154,6 @@ Anything else falls back to hashing the last lines of stderr. To add a language,
 - No network capture yet (the sandbox simply has no network).
 - No semantic drift detection yet; detection is command and state based.
 - Error signatures cover Python, Node.js and Go only. Other languages use a generic fallback.
-- The recorder appends to an existing log file, which breaks verification ([#3](https://github.com/Prathmesh010190/Agentboxx/issues/3)).
 
 ## Roadmap
 
