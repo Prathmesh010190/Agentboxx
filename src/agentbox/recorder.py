@@ -1,0 +1,31 @@
+"""The main API. Wrap every action your agent takes in `recorder.run(...)`."""
+from pathlib import Path
+
+from .executor import run_command
+from .loop_detector import LoopConfig, LoopDetector
+from .signer import ChainWriter, load_or_create_key
+
+
+class Recorder:
+    def __init__(self, session_id: str, workspace: str = "./workspace",
+                 log_dir: str = "./runs", key_path=None, loop_cfg: LoopConfig | None = None):
+        self.session_id, self.workspace = session_id, workspace
+        self.log_path = Path(log_dir) / f"{session_id}.ndjson"
+        self.writer = ChainWriter(self.log_path, load_or_create_key(key_path))
+        self.detector = LoopDetector(loop_cfg)
+        self.step_index = 0
+        self.writer.append("session.start", {"session_id": session_id})
+
+    def run(self, command: str, thought: str = "", timeout_s: int = 60) -> dict:
+        self.step_index += 1
+        obs = run_command(command, self.workspace, timeout_s)
+        step = {"session_id": self.session_id, "step_index": self.step_index,
+                "thought": thought, **obs}
+        self.writer.append("step", step)
+        signals = self.detector.observe(step)
+        for s in signals:
+            self.writer.append("analysis.signal", {"step_index": self.step_index, **s})
+        return {"observation": obs, "signals": signals}
+
+    def close(self, reason: str = "done"):
+        self.writer.append("session.end", {"reason": reason, "steps": self.step_index})
