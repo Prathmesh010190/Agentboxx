@@ -4,6 +4,9 @@ Loop: model proposes a command -> sandbox runs it -> recorder logs it ->
 the observation (plus any loop-detector hint) goes back to the model.
 """
 import json
+import os
+import re
+import time
 
 SYSTEM_PROMPT = (
     "You are a coding agent working in a sandbox with a bash tool. "
@@ -12,6 +15,63 @@ SYSTEM_PROMPT = (
     'When the goal is done: {"thought": "why", "final": "short answer"}. '
     "If you receive an [agentbox hint], change your approach."
 )
+
+
+class AnthropicModelError(RuntimeError):
+    """Raised when AnthropicModel cannot obtain or parse a valid response."""
+    pass
+
+
+ModelError = AnthropicModelError
+
+
+def extract_json(text: str) -> dict:
+    """Extract a JSON object from model reply text.
+    
+    Handles:
+    - Pure JSON strings
+    - Markdown fenced code blocks (```json ... ``` or ``` ... ```)
+    - JSON objects embedded within surrounding prose
+    """
+    text = text.strip()
+    if not text:
+        raise AnthropicModelError("Model returned empty text.")
+
+    # 1. Direct JSON parse
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            return data
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Markdown fenced code blocks
+    fence_pattern = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
+    for match in fence_pattern.finditer(text):
+        content = match.group(1).strip()
+        try:
+            data = json.loads(content)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            pass
+
+    # 3. Locate JSON object in surrounding prose using JSONDecoder.raw_decode
+    decoder = json.JSONDecoder()
+    pos = 0
+    while True:
+        pos = text.find("{", pos)
+        if pos == -1:
+            break
+        try:
+            data, _ = decoder.raw_decode(text[pos:])
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            pass
+        pos += 1
+
+    raise AnthropicModelError(f"Unparseable reply: no valid JSON object found in response: {text[:500]}")
 
 
 class ScriptedModel:
@@ -45,20 +105,97 @@ class AnthropicModel:
     """Real model via the Anthropic API. Needs `pip install anthropic` and
     the ANTHROPIC_API_KEY environment variable."""
 
-    def __init__(self, model="claude-sonnet-5-5"):
-        import anthropic
-        self.client, self.model = anthropic.Anthropic(), model
+    def __init__(self, model: str | None = None, client=None, max_retries: int = 3, retry_backoff_s: float = 0.5):
+        self.model = model or os.environ.get("AGENTBOX_MODEL") or "claude-3-5-sonnet-latest"
+        self.max_retries = max_retries
+        self.retry_backoff_s = retry_backoff_s
+        if client is not None:
+            self.client = client
+        else:
+            try:
+                import anthropic
+                self.client = anthropic.Anthropic()
+            except ImportError:
+                raise ImportError("The 'anthropic' package is required to use AnthropicModel. Run 'pip install anthropic'.")
 
     def next_action(self, messages):
-        r = self.client.messages.create(model=self.model, max_tokens=1000,
-                                        system=SYSTEM_PROMPT, messages=messages)
-        text = r.content[0].text.strip()
-        if text.startswith("```"):
-            text = text.strip("`").removeprefix("json").strip()
+        if not messages or messages[0].get("role") != "user":
+            raise AnthropicModelError("Message history must start with a user message.")
+        for i in range(1, len(messages)):
+            if messages[i].get("role") == messages[i - 1].get("role"):
+                raise AnthropicModelError(
+                    f"Messages must alternate roles: message {i} and {i-1} both have role '{messages[i].get('role')}'."
+                )
+        if messages[-1].get("role") != "user":
+            raise AnthropicModelError("Last message sent to model must have role 'user'.")
+
         try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return {"thought": "unparseable reply", "final": text[:500]}
+            import anthropic
+        except ImportError:
+            anthropic = None
+
+        r = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                r = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=1000,
+                    system=SYSTEM_PROMPT,
+                    messages=messages,
+                )
+                break
+            except Exception as e:
+                if anthropic:
+                    if isinstance(e, anthropic.AuthenticationError):
+                        raise AnthropicModelError(f"Authentication failure: check your ANTHROPIC_API_KEY. ({e})") from e
+                    if isinstance(e, anthropic.PermissionDeniedError):
+                        raise AnthropicModelError(f"Permission denied: {e}") from e
+                    if isinstance(e, anthropic.NotFoundError):
+                        raise AnthropicModelError(f"Model '{self.model}' not found: {e}") from e
+                    if isinstance(e, anthropic.BadRequestError):
+                        raise AnthropicModelError(f"Bad request to Anthropic API: {e}") from e
+
+                    transient_classes = (
+                        anthropic.RateLimitError,
+                        anthropic.InternalServerError,
+                        getattr(anthropic, "OverloadedError", anthropic.InternalServerError),
+                        anthropic.APITimeoutError,
+                        anthropic.APIConnectionError,
+                    )
+                    if isinstance(e, transient_classes):
+                        if attempt < self.max_retries:
+                            time.sleep(self.retry_backoff_s * (2 ** attempt))
+                            continue
+                        raise AnthropicModelError(f"API error after {self.max_retries} retries ({type(e).__name__}): {e}") from e
+                    if isinstance(e, anthropic.APIError):
+                        raise AnthropicModelError(f"Anthropic API error: {e}") from e
+
+                err_name = type(e).__name__
+                if any(t in err_name for t in ("RateLimit", "InternalServer", "Overloaded", "Timeout", "Connection")):
+                    if attempt < self.max_retries:
+                        time.sleep(self.retry_backoff_s * (2 ** attempt))
+                        continue
+                    raise AnthropicModelError(f"API error after {self.max_retries} retries ({err_name}): {e}") from e
+
+                raise AnthropicModelError(f"API error: {e}") from e
+
+        if r is None:
+            raise AnthropicModelError("Failed to obtain response from Anthropic API.")
+
+        if getattr(r, "stop_reason", None) == "max_tokens":
+            raise AnthropicModelError("Model response was truncated (reached max_tokens).")
+
+        content = getattr(r, "content", None)
+        if not content:
+            raise AnthropicModelError("Model returned empty content.")
+
+        block = content[0]
+        block_type = getattr(block, "type", "text")
+        block_text = getattr(block, "text", None)
+        if block_type != "text" or block_text is None:
+            raise AnthropicModelError(f"First content block is not text (type={block_type}).")
+
+        return extract_json(block_text)
 
 
 def _format_observation(obs: dict) -> str:
@@ -71,7 +208,14 @@ def run_agent(goal, model, recorder, max_steps=15, verbose=True) -> dict:
     messages = [{"role": "user", "content": f"Goal: {goal}"}]
     reason, final = "max_steps", None
     for _ in range(max_steps):
-        action = model.next_action(messages)
+        try:
+            action = model.next_action(messages)
+        except AnthropicModelError as e:
+            if verbose:
+                print(f"    !! model error: {e}")
+            reason = f"model_error: {e}"
+            break
+
         messages.append({"role": "assistant", "content": json.dumps(action)})
         if action.get("final") is not None:
             reason, final = "final_answer", action["final"]

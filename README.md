@@ -116,7 +116,40 @@ print(result["signals"])                 # loop warnings, if any
 rec.close("done")                        # also stops the container
 ~~~
 
-`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`) and has **not yet been validated against the live API** ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5)).
+`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key.
+
+### Using a real model (Anthropic Claude)
+
+Install the anthropic client and set your API key:
+
+~~~bash
+pip install anthropic
+export ANTHROPIC_API_KEY="your-api-key"
+~~~
+
+Run the real model demo:
+
+~~~bash
+python examples/demo_real_model.py "Write fib.py that prints the first 10 Fibonacci numbers and run it."
+~~~
+
+Or use `AnthropicModel` programmatically:
+
+~~~python
+from agentbox import Recorder
+from agentbox.agent import AnthropicModel, run_agent
+
+model = AnthropicModel(model="claude-3-5-sonnet-latest")  # or set AGENTBOX_MODEL env var
+rec = Recorder("claude-session", workspace="./workspace")
+try:
+    result = run_agent("Create fib.py and run it", model, rec)
+finally:
+    rec.close("done")
+~~~
+
+Tested models:
+- `claude-3-5-sonnet-latest` (default)
+- `claude-3-7-sonnet-latest`
 
 ## Detection signals
 
