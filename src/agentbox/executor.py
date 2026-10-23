@@ -2,6 +2,7 @@
 import hashlib
 import os
 import re
+import shutil
 import subprocess
 import time
 
@@ -16,6 +17,20 @@ _NORMALIZERS = [
 ]
 _ERR_CLASS = re.compile(r"^([A-Za-z_][\w.]*(?:Error|Exception))\b", re.M)
 MAX_KEEP = 4000
+
+
+def _find_bash() -> str:
+    found = shutil.which("bash")
+    if found:
+        return found
+    for candidate in [
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files\Git\usr\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\bash.exe",
+    ]:
+        if os.path.isfile(candidate):
+            return candidate
+    return "bash"
 
 
 def normalize(text: str) -> str:
@@ -77,7 +92,7 @@ def run_command(cmd: str, workspace: str, timeout_s: int = 60) -> dict:
     timed_out = False
     try:
         p = subprocess.run(
-            ["bash", "--noprofile", "--norc", "-c", cmd],
+            [_find_bash(), "--noprofile", "--norc", "-c", cmd],
             cwd=workspace, capture_output=True, text=True, timeout=timeout_s,
         )
         code, out, err = p.returncode, p.stdout, p.stderr
