@@ -116,7 +116,66 @@ print(result["signals"])                 # loop warnings, if any
 rec.close("done")                        # also stops the container
 ~~~
 
-`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`) and has **not yet been validated against the live API** ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5)).
+`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key.
+
+### Using a real model (Anthropic Claude)
+
+> [!NOTE]
+> **Not yet validated against live sessions.** The interface is in place and all unit tests pass with a fake client. Live validation is tracked in [#5](https://github.com/Prathmesh010190/Agentboxx/issues/5).
+
+**Setup — environment variables:**
+
+| Variable | Purpose |
+|---|---|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key (required) |
+| `AGENTBOX_MODEL` | Model to use; overridden by `--model` flag (optional) |
+
+Install the anthropic client and set your API key:
+
+~~~bash
+pip install anthropic
+export ANTHROPIC_API_KEY="your-api-key"
+~~~
+
+**Run the real model demo:**
+
+~~~bash
+# Docker sandbox (default — Docker must be running)
+python examples/demo_real_model.py "Write fib.py that prints the first 10 Fibonacci numbers and run it."
+
+# If Docker is unavailable, pass --local to fall back to host execution
+python examples/demo_real_model.py --local "Write fib.py and run it."
+
+# Override model and step limit
+python examples/demo_real_model.py --model claude-sonnet-5-5 --max-steps 15 "Your goal here."
+~~~
+
+**Inspect and verify a session log:**
+
+~~~bash
+# Human-readable summary
+agentbox report runs/<session-id>.ndjson
+
+# Cryptographic integrity check
+agentbox verify runs/<session-id>.ndjson
+~~~
+
+Or use `AnthropicModel` programmatically:
+
+~~~python
+from agentbox import Recorder
+from agentbox.agent import AnthropicModel, run_agent
+
+model = AnthropicModel(model="claude-sonnet-5-5")  # or set AGENTBOX_MODEL env var
+rec = Recorder("claude-session", workspace="./workspace")
+try:
+    result = run_agent("Create fib.py and run it", model, rec)
+finally:
+    rec.close("done")
+~~~
+
+Known-compatible models (live validation left to maintainer):
+- `claude-sonnet-5-5` (default)
 
 ## Detection signals
 
