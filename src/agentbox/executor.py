@@ -6,6 +6,7 @@ import subprocess
 import time
 
 from .error_signatures import extract_go, extract_node
+from .redact import redact_all
 
 _NORMALIZERS = [
     (re.compile(r"0x[0-9a-fA-F]+"), "<HEX>"),
@@ -84,8 +85,10 @@ def run_command(cmd: str, workspace: str, timeout_s: int = 60) -> dict:
     except subprocess.TimeoutExpired as e:
         timed_out, code = True, 124
         out, err = _txt(e.stdout), _txt(e.stderr)
+    cmd, out, err, redactions = redact_all(cmd, out, err)   # before fingerprints and clipping
     sig, cls = error_signature(err, code)
     return {
+        "redactions": redactions,
         "command": cmd,
         "command_fingerprint": fingerprint(cmd),
         "exit_code": code,

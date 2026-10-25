@@ -3,6 +3,7 @@ from pathlib import Path
 
 from .executor import run_command
 from .loop_detector import LoopConfig, LoopDetector
+from .redact import merge_counts, redact
 from .signer import ChainWriter, load_or_create_key
 
 
@@ -25,8 +26,10 @@ class Recorder:
             obs = self.sandbox.run(command, timeout_s)
         else:
             obs = run_command(command, self.workspace, timeout_s)
+        thought, t_counts = redact(thought)
+        redactions = merge_counts(obs.get("redactions", {}), t_counts)
         step = {"session_id": self.session_id, "step_index": self.step_index,
-                "thought": thought, **obs}
+                "thought": thought, **obs, "redactions": redactions}
         self.writer.append("step", step)
         signals = self.detector.observe(step)
         for s in signals:
