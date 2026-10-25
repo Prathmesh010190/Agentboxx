@@ -151,6 +151,17 @@ Repeated-error detection compares normalized error signatures, so the same failu
 
 Anything else falls back to hashing the last lines of stderr. To add a language, see `src/agentbox/error_signatures.py`.
 
+## Secret redaction
+
+Commands, output and the model's reasoning are redacted **before** they are signed, because a signed record cannot be edited afterward. Recognized: private key blocks, AWS, GitHub, Slack and Google keys, `sk-` style API keys, JWTs, `Authorization` headers, passwords in URLs, and `NAME=value` where the name contains `password`, `secret`, `token` or `api_key`. Each step records only a count per pattern, never the value.
+
+Limits to know about:
+- Patterns are heuristics. They miss some secrets (for example a secret with no recognizable name or format) and sometimes hide harmless values such as a long `*_token=` setting.
+- The command itself still runs with the real value. Only the **record** is redacted.
+- With the agent loop, the model also receives the redacted output, so it cannot read a secret that a command printed.
+- Files in the workspace are not logged, but anything a command prints from them is covered by these patterns only.
+- Add your own patterns with `agentbox.redact.add_pattern(name, regex)`.
+
 ## Threat model
 
 - **Docker backend:** commands run as a non-root user in a container with no network, a read-only root filesystem, all Linux capabilities dropped, `no-new-privileges`, and CPU, memory and process limits. The signing key and logs stay on the host and are never mounted into the container.

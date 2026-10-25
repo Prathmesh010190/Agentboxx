@@ -10,6 +10,7 @@ import time
 import uuid
 
 from .executor import _clip, _txt, error_signature, fingerprint, workspace_hash
+from .redact import redact_all
 
 DEFAULT_IMAGE = "python:3.12-slim"
 
@@ -82,8 +83,10 @@ class DockerSandbox:
             code, out, err = p.returncode, p.stdout, p.stderr
         except subprocess.TimeoutExpired as e:
             code, out, err = 124, _txt(e.stdout), _txt(e.stderr)
+        cmd, out, err, redactions = redact_all(cmd, out, err)
         sig, cls = error_signature(err, code)
         return {
+            "redactions": redactions,
             "command": cmd,
             "command_fingerprint": fingerprint(cmd),
             "exit_code": code,
