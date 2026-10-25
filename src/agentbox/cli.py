@@ -2,16 +2,21 @@ import argparse
 import json
 import sys
 
-from .signer import load_or_create_key, verify_file
+from .signer import load_or_create_key, verify_log
 
 
 def cmd_verify(args):
-    problems = verify_file(args.logfile, load_or_create_key())
+    problems, incomplete = verify_log(args.logfile, load_or_create_key())
     if problems:
         print("LOG HAS BEEN TAMPERED WITH OR IS CORRUPT:")
         for p in problems:
             print("  -", p)
         return 1
+    if incomplete:
+        print("INCOMPLETE LOG (chain and signatures are valid so far):")
+        for p in incomplete:
+            print("  -", p)
+        return 2
     print("OK: log is intact (chain and signatures valid).")
     return 0
 
