@@ -183,6 +183,11 @@ Limits to know about:
 - [x] Loop detection with hint feedback
 - [x] ReAct-style agent loop
 - [x] Stable error signatures for Python, Node.js and Go
+- [x] Truncation detection with a signed closing manifest
+- [x] Secret redaction before signing
+- [ ] Output size cap and process-tree kill on timeout
+- [ ] Sandbox resource and crash events
+- [ ] Public-key signing so third parties can verify logs
 - [ ] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
 - [ ] Network egress capture
 - [ ] Semantic drift detector
