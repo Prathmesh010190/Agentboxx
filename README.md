@@ -118,6 +118,16 @@ rec.close("done")                        # also stops the container
 
 `agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`) and has **not yet been validated against the live API** ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5)).
 
+## What `agentbox verify` reports
+
+| Result | Exit code | Meaning |
+|---|---|---|
+| `OK` | 0 | Chain, signatures and the closing manifest all match |
+| `TAMPERED` | 1 | A record was edited, removed or reordered, or the log no longer matches its signed manifest |
+| `INCOMPLETE` | 2 | The log is intact so far but was never closed: a crash, a running session, or a removed tail |
+
+The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. Limits: if someone truncates the log and also deletes the manifest, the result is `INCOMPLETE` rather than `TAMPERED`, because that looks like a crash. Anyone who can read the signing key can forge both files, so copy manifests somewhere the agent host cannot write to if that matters. Public-key signing, as used for Nanda Town's evidence attestations, would let third parties verify logs without holding a secret, and is a possible future change.
+
 ## Detection signals
 
 | Signal | Meaning |

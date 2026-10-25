@@ -38,7 +38,12 @@ class ChainWriter:
                 raise FileExistsError(
                     f"Log already exists: {self.path}. Use a new session id or pass overwrite=True.")
             self.path.write_text("")
+        manifest_path(self.path).unlink(missing_ok=True)   # never keep a stale manifest
         self.key, self.seq, self.prev = key, 0, GENESIS
+
+    def write_manifest(self):
+        """Write the signed closing manifest. Call after the final record."""
+        write_manifest(self.path, self.key, self.seq, self.prev)
 
     def append(self, event_type: str, data: dict) -> dict:
         self.seq += 1
@@ -85,3 +90,55 @@ def verify_file(path, key: bytes) -> list[str]:
                 problems.append(f"line {n}: bad signature")
             prev = rec["hash"]
     return problems
+
+
+def manifest_path(log_path) -> Path:
+    p = Path(log_path)
+    return p.with_name(p.stem + ".manifest.json")
+
+
+def write_manifest(log_path, key: bytes, records: int, final_hash: str):
+    """Signed summary written when a session closes: record count and last hash."""
+    payload = {"log": Path(log_path).name, "records": records, "final_hash": final_hash}
+    sig = hmac.new(key, canon(payload), hashlib.sha256).hexdigest()
+    manifest_path(log_path).write_text(
+        json.dumps({"payload": payload, "sig": sig}, indent=2), encoding="utf-8")
+
+
+def verify_log(path, key: bytes):
+    """Full check. Returns (problems, incomplete).
+
+    problems   = evidence of tampering (bad chain or signature, or the log does
+                 not match its signed manifest, e.g. the end was cut off).
+    incomplete = the log is intact so far but was never closed, or its end is
+                 missing: a crash, a running session, or a removed tail.
+    """
+    problems = verify_file(path, key)
+    last = {}
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            try:
+                rec = json.loads(line)
+                last = {"seq": rec["event"]["seq"], "hash": rec["hash"],
+                        "type": rec["event"]["event_type"]}
+            except (ValueError, KeyError, TypeError):
+                continue
+    incomplete = []
+    mp = manifest_path(path)
+    if mp.exists():
+        try:
+            m = json.loads(mp.read_text(encoding="utf-8"))
+            payload, sig = m["payload"], m["sig"]
+            want = hmac.new(key, canon(payload), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(want, sig):
+                problems.append("manifest signature is invalid")
+            elif last.get("seq") != payload["records"] or last.get("hash") != payload["final_hash"]:
+                problems.append(
+                    f"log does not match its signed manifest (expected {payload['records']} "
+                    f"records ending in {payload['final_hash'][:12]}): truncated or modified")
+        except (OSError, ValueError, KeyError, TypeError):
+            problems.append("manifest is unreadable")
+    elif last.get("type") != "session.end":
+        incomplete.append("no session.end record and no manifest: the session crashed, "
+                          "is still running, or the end of the log was removed")
+    return problems, incomplete

@@ -35,5 +35,6 @@ class Recorder:
 
     def close(self, reason: str = "done"):
         self.writer.append("session.end", {"reason": reason, "steps": self.step_index})
+        self.writer.write_manifest()
         if self.sandbox:
             self.sandbox.stop()
