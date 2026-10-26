@@ -1,9 +1,3 @@
-"""Run agent commands inside an isolated Docker container (v0.2).
-
-The signing key and log files stay on the HOST. The container only sees
-the workspace folder, has no network by default, a read-only filesystem,
-no Linux capabilities, and resource limits.
-"""
 import os
 import subprocess
 import time
@@ -21,70 +15,176 @@ class DockerNotAvailable(RuntimeError):
 
 def docker_available() -> bool:
     try:
-        r = subprocess.run(["docker", "info"], capture_output=True, timeout=20)
-        return r.returncode == 0
+        result = subprocess.run(
+            ["docker", "info"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        return result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
 
 
 class DockerSandbox:
-    def __init__(self, workspace="./workspace-docker", image=DEFAULT_IMAGE,
-                 network="none", memory="512m", cpus="1", pids=128):
+    def __init__(
+        self,
+        workspace="./workspace-docker",
+        image=DEFAULT_IMAGE,
+        network="none",
+        memory="512m",
+        cpus="1",
+        pids=128,
+    ):
         self.workspace = os.path.abspath(workspace)
-        self.image, self.network = image, network
-        self.memory, self.cpus, self.pids = memory, cpus, pids
+        self.image = image
+        self.network = network
+        self.memory = memory
+        self.cpus = cpus
+        self.pids = pids
         self.name = f"agentbox-{uuid.uuid4().hex[:8]}"
         self.started = False
 
     def describe(self) -> dict:
-        return {"backend": "docker", "image": self.image, "network": self.network,
-                "memory": self.memory, "cpus": self.cpus, "pids_limit": self.pids,
-                "read_only_rootfs": True, "cap_drop": "ALL"}
+        return {
+            "backend": "docker",
+            "image": self.image,
+            "network": self.network,
+            "memory": self.memory,
+            "cpus": self.cpus,
+            "pids_limit": self.pids,
+            "read_only_rootfs": True,
+            "cap_drop": "ALL",
+        }
 
     def start(self):
         if not docker_available():
-            raise DockerNotAvailable("Docker is not running or not installed.")
+            raise DockerNotAvailable(
+                "Docker is not running or not installed."
+            )
+
         os.makedirs(self.workspace, exist_ok=True)
+
         cmd = [
-            "docker", "run", "-d", "--rm", "--name", self.name,
-            "--network", self.network,
+            "docker",
+            "run",
+            "-d",
+            "--rm",
+            "--name",
+            self.name,
+            "--network",
+            self.network,
             "--read-only",
-            "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-            "--cap-drop", "ALL",
-            "--security-opt", "no-new-privileges:true",
-            "--pids-limit", str(self.pids),
-            "--memory", self.memory, "--memory-swap", self.memory,
-            "--cpus", str(self.cpus),
-            "--user", f"{os.getuid()}:{os.getgid()}",
-            "-e", "HOME=/tmp",
-            "-v", f"{self.workspace}:/workspace",
-            "-w", "/workspace",
-            self.image, "sleep", "infinity",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=64m",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges:true",
+            "--pids-limit",
+            str(self.pids),
+            "--memory",
+            self.memory,
+            "--memory-swap",
+            self.memory,
+            "--cpus",
+            str(self.cpus),
         ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            raise DockerNotAvailable(f"Could not start container: {r.stderr.strip()}")
+
+        # os.getuid() and os.getgid() are unavailable on Windows.
+        # Preserve UID/GID mapping on Unix-like hosts.
+        if os.name != "nt":
+            cmd.extend([
+                "--user",
+                f"{os.getuid()}:{os.getgid()}",
+            ])
+
+        cmd.extend([
+            "-e",
+            "HOME=/tmp",
+            "-v",
+            f"{self.workspace}:/workspace",
+            "-w",
+            "/workspace",
+            self.image,
+            "sleep",
+            "infinity",
+        ])
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            raise DockerNotAvailable(
+                f"Could not start container: {result.stderr.strip()}"
+            )
+
         self.started = True
 
     def stop(self):
-        if self.started:
-            subprocess.run(["docker", "rm", "-f", self.name], capture_output=True)
-            self.started = False
+
+        if not self.started:
+            return
+
+        result = subprocess.run(
+            ["docker", "rm", "-f", self.name],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            raise DockerNotAvailable(
+                f"Could not stop container: {result.stderr.strip()}"
+            )
+
+        self.started = False
 
     def run(self, cmd: str, timeout_s: int = 60) -> dict:
+
         if not self.started:
             raise RuntimeError("Call start() before run().")
-        argv = ["docker", "exec", "-w", "/workspace", self.name,
-                "timeout", "-k", "2", str(timeout_s),
-                "bash", "--noprofile", "--norc", "-c", cmd]
-        t0 = time.monotonic()
+
+        argv = [
+            "docker",
+            "exec",
+            "-w",
+            "/workspace",
+            self.name,
+            "timeout",
+            "-k",
+            "2",
+            str(timeout_s),
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            cmd,
+        ]
+
+        start_time = time.monotonic()
+
         try:
-            p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s + 10)
-            code, out, err = p.returncode, p.stdout, p.stderr
-        except subprocess.TimeoutExpired as e:
-            code, out, err = 124, _txt(e.stdout), _txt(e.stderr)
+            result = subprocess.run(
+                argv,
+                capture_output=True,
+                text=True,
+                timeout=timeout_s + 10,
+            )
+            code = result.returncode
+            out = result.stdout
+            err = result.stderr
+
+        except subprocess.TimeoutExpired as exc:
+            code = 124
+            out = _txt(exc.stdout)
+            err = _txt(exc.stderr)
+
         cmd, out, err, redactions = redact_all(cmd, out, err)
-        sig, cls = error_signature(err, code)
+        signature, error_class = error_signature(err, code)
+
         return {
             "redactions": redactions,
             "command": cmd,
@@ -93,8 +193,10 @@ class DockerSandbox:
             "timed_out": code == 124,
             "stdout": _clip(out),
             "stderr": _clip(err),
-            "error_signature": sig,
-            "error_class": cls,
+            "error_signature": signature,
+            "error_class": error_class,
             "workspace_hash": workspace_hash(self.workspace),
-            "duration_ms": int((time.monotonic() - t0) * 1000),
+            "duration_ms": int(
+                (time.monotonic() - start_time) * 1000
+            ),
         }
