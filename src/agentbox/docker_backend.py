@@ -9,8 +9,8 @@ import subprocess
 import time
 import uuid
 
-from .executor import _clip, _txt, error_signature, fingerprint, workspace_hash
-from .redact import redact_all
+from .executor import build_observation
+from .streaming import DEFAULT_MAX_STREAM_BYTES, run_streaming
 
 DEFAULT_IMAGE = "python:3.12-slim"
 
@@ -71,30 +71,26 @@ class DockerSandbox:
             subprocess.run(["docker", "rm", "-f", self.name], capture_output=True)
             self.started = False
 
-    def run(self, cmd: str, timeout_s: int = 60) -> dict:
+    def _kill_stragglers(self):
+        """Kill everything in the container except PID 1 (the idle `sleep`)."""
+        try:
+            subprocess.run(["docker", "exec", self.name, "sh", "-c", 'for p in /proc/[0-9]*; do pid=${p#/proc/}; if [ "$pid" -gt 1 ] && [ "$pid" != "$$" ]; then kill -9 "$pid" 2>/dev/null; fi; done'],
+                           capture_output=True, timeout=15)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+
+    def run(self, cmd: str, timeout_s: int = 60,
+            max_output_bytes: int = DEFAULT_MAX_STREAM_BYTES) -> dict:
         if not self.started:
             raise RuntimeError("Call start() before run().")
         argv = ["docker", "exec", "-w", "/workspace", self.name,
                 "timeout", "-k", "2", str(timeout_s),
                 "bash", "--noprofile", "--norc", "-c", cmd]
         t0 = time.monotonic()
-        try:
-            p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s + 10)
-            code, out, err = p.returncode, p.stdout, p.stderr
-        except subprocess.TimeoutExpired as e:
-            code, out, err = 124, _txt(e.stdout), _txt(e.stderr)
-        cmd, out, err, redactions = redact_all(cmd, out, err)
-        sig, cls = error_signature(err, code)
-        return {
-            "redactions": redactions,
-            "command": cmd,
-            "command_fingerprint": fingerprint(cmd),
-            "exit_code": code,
-            "timed_out": code == 124,
-            "stdout": _clip(out),
-            "stderr": _clip(err),
-            "error_signature": sig,
-            "error_class": cls,
-            "workspace_hash": workspace_hash(self.workspace),
-            "duration_ms": int((time.monotonic() - t0) * 1000),
-        }
+        # The in-container `timeout` is the normal deadline (exit 124); the host-side
+        # deadline is a backstop if `docker exec` itself hangs.
+        code, out, err, timed_out, exceeded = run_streaming(
+            argv, cwd=None, timeout_s=timeout_s + 10, max_bytes=max_output_bytes,
+            cleanup=self._kill_stragglers)
+        return build_observation(cmd, code, out, err, timed_out or code == 124, exceeded,
+                                 self.workspace, int((time.monotonic() - t0) * 1000))

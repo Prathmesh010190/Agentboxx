@@ -2,11 +2,11 @@
 import hashlib
 import os
 import re
-import subprocess
 import time
 
 from .error_signatures import extract_go, extract_node
 from .redact import redact_all
+from .streaming import DEFAULT_MAX_STREAM_BYTES, run_streaming
 
 _NORMALIZERS = [
     (re.compile(r"0x[0-9a-fA-F]+"), "<HEX>"),
@@ -72,31 +72,44 @@ def _txt(x) -> str:
     return x.decode("utf-8", "replace") if isinstance(x, bytes) else x
 
 
-def run_command(cmd: str, workspace: str, timeout_s: int = 60) -> dict:
-    os.makedirs(workspace, exist_ok=True)
-    t0 = time.monotonic()
-    timed_out = False
-    try:
-        p = subprocess.run(
-            ["bash", "--noprofile", "--norc", "-c", cmd],
-            cwd=workspace, capture_output=True, text=True, timeout=timeout_s,
-        )
-        code, out, err = p.returncode, p.stdout, p.stderr
-    except subprocess.TimeoutExpired as e:
-        timed_out, code = True, 124
-        out, err = _txt(e.stdout), _txt(e.stderr)
-    cmd, out, err, redactions = redact_all(cmd, out, err)   # before fingerprints and clipping
-    sig, cls = error_signature(err, code)
+def _stream_record(text: str, cap) -> dict:
+    # total_chars is kept for compatibility; it counts bytes seen on the stream.
+    return {
+        "text": text,
+        "total_chars": cap.total,
+        "total_bytes": cap.total,
+        "truncated": cap.truncated,
+        "sha256": hashlib.sha256(text.encode()).hexdigest(),   # of the stored, redacted text
+    }
+
+
+def build_observation(cmd, code, out, err, timed_out, exceeded, workspace, duration_ms) -> dict:
+    """Turn a finished command into a log record. Used by every backend."""
+    out_text, err_text = out.text(), err.text()
+    cmd, out_text, err_text, redactions = redact_all(cmd, out_text, err_text)
+    sig, cls = error_signature(err_text, code)
     return {
         "redactions": redactions,
         "command": cmd,
         "command_fingerprint": fingerprint(cmd),
         "exit_code": code,
         "timed_out": timed_out,
-        "stdout": _clip(out),
-        "stderr": _clip(err),
+        "output_limit_exceeded": exceeded,
+        "stdout": _stream_record(out_text, out),
+        "stderr": _stream_record(err_text, err),
         "error_signature": sig,
         "error_class": cls,
         "workspace_hash": workspace_hash(workspace),
-        "duration_ms": int((time.monotonic() - t0) * 1000),
+        "duration_ms": duration_ms,
     }
+
+
+def run_command(cmd: str, workspace: str, timeout_s: int = 60,
+                max_output_bytes: int = DEFAULT_MAX_STREAM_BYTES) -> dict:
+    os.makedirs(workspace, exist_ok=True)
+    t0 = time.monotonic()
+    code, out, err, timed_out, exceeded = run_streaming(
+        ["bash", "--noprofile", "--norc", "-c", cmd],
+        cwd=workspace, timeout_s=timeout_s, max_bytes=max_output_bytes)
+    return build_observation(cmd, code, out, err, timed_out, exceeded, workspace,
+                             int((time.monotonic() - t0) * 1000))

@@ -15,7 +15,7 @@ _NOT_DONE = r"(?!\[REDACTED:)"   # do not re-redact text a specific pattern alre
 # context-based patterns (headers, URLs, KEY=value) last.
 PATTERNS = [
     ("private_key", re.compile(
-        r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.S),
+        r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(?:-----END [A-Z ]*PRIVATE KEY-----|\Z)", re.S),
      "[REDACTED:private_key]"),
     ("aws_key", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"), "[REDACTED:aws_key]"),
     ("github_token", re.compile(
