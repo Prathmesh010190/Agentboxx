@@ -57,7 +57,13 @@ pip install -e ".[dev]"
 pytest
 ~~~
 
-Run the demos:
+Try it with one command (no Docker, no API key, nothing left behind):
+
+~~~bash
+agentbox demo
+~~~
+
+Run the demos from the repo:
 
 ~~~bash
 python examples/demo_agent.py            # stuck-agent demo (local backend)
@@ -66,7 +72,11 @@ python examples/demo_agent_loop.py       # full pipeline: detect, hint, recover
 
 agentbox report runs/agent-demo.ndjson   # readable summary
 agentbox verify runs/agent-demo.ndjson   # integrity check
+agentbox list                            # every log in ./runs: session, start time, steps, verifies?
+agentbox --version
 ~~~
+
+`report` uses color for errors and warnings when writing to a terminal. Set `NO_COLOR=1` to turn it off.
 
 ### Example: a stuck agent recovers
 
@@ -125,6 +135,7 @@ rec.close("done")                        # also stops the container
 | `OK` | 0 | Chain, signatures and the closing manifest all match |
 | `TAMPERED` | 1 | A record was edited, removed or reordered, or the log no longer matches its signed manifest |
 | `INCOMPLETE` | 2 | The log is intact so far but was never closed: a crash, a running session, or a removed tail |
+| *(error)* | 3 | The file is missing, empty, a directory or unreadable. This is not a verdict on the log, and `report` uses the same code |
 
 The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. Limits: if someone truncates the log and also deletes the manifest, the result is `INCOMPLETE` rather than `TAMPERED`, because that looks like a crash. Anyone who can read the signing key can forge both files, so copy manifests somewhere the agent host cannot write to if that matters. Public-key signing, as used for Nanda Town's evidence attestations, would let third parties verify logs without holding a secret, and is a possible future change.
 
