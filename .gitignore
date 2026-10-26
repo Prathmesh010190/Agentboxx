@@ -10,3 +10,4 @@ workspace/
 .env
 workspace-docker/
 workspace-agent/
+workspace-limit/
