@@ -190,6 +190,7 @@ Limits to know about:
 
 ## Limitations
 
+- Windows is experimental. The Docker backend no longer needs Unix user IDs and runs as user `1000:1000` in the container (override with `DockerSandbox(user=...)`), but it has not been run on real Windows hardware yet. It needs Docker Desktop with Linux containers. The local backend still needs `bash` (Git Bash), and on Windows a timeout kills only the direct child process.
 - Detector thresholds are initial values, not calibrated on real agent traces.
 - No network capture yet (the sandbox simply has no network).
 - No semantic drift detection yet; detection is command and state based.
