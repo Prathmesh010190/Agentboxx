@@ -150,6 +150,14 @@ The manifest (`<session>.manifest.json`) is written when a session closes and re
 
 Warnings become hints for the model. Critical severity (for example five identical repeats) stops the run.
 
+## Sandbox resource and crash events
+
+With the Docker backend, the host records two extra signed events after each step: `sandbox.resource` (memory, CPU, process count) and `sandbox.crash` (an out-of-memory kill, or a container that stopped). Everything is read on the host through Docker, so the agent cannot influence it.
+
+- Resource sampling adds about a second per step. Turn it off with `DockerSandbox(resource_stats=False)`.
+- A sample is a snapshot after the step, not a peak.
+- The local backend has no equivalent, and `agentbox report` does not show these events yet.
+
 ## Error signatures
 
 Repeated-error detection compares normalized error signatures, so the same failure matches even when line numbers, file paths or runtime versions differ.
@@ -197,7 +205,7 @@ Limits to know about:
 - [x] Truncation detection with a signed closing manifest
 - [x] Secret redaction before signing
 - [ ] Output size cap and process-tree kill on timeout
-- [ ] Sandbox resource and crash events
+- [x] Sandbox resource and crash events (Docker backend)
 - [ ] Public-key signing so third parties can verify logs
 - [ ] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
 - [ ] Network egress capture
