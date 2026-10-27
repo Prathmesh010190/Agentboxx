@@ -6,10 +6,12 @@ no Linux capabilities, and resource limits.
 """
 import os
 import subprocess
+import threading
 import time
 import uuid
 
 from .executor import build_observation
+from .sandbox_stats import EventCounter, parse_state, parse_stats
 from .streaming import DEFAULT_MAX_STREAM_BYTES, run_streaming
 
 DEFAULT_IMAGE = "python:3.12-slim"
@@ -29,17 +31,20 @@ def docker_available() -> bool:
 
 class DockerSandbox:
     def __init__(self, workspace="./workspace-docker", image=DEFAULT_IMAGE,
-                 network="none", memory="512m", cpus="1", pids=128):
+                 network="none", memory="512m", cpus="1", pids=128, resource_stats=True):
         self.workspace = os.path.abspath(workspace)
         self.image, self.network = image, network
         self.memory, self.cpus, self.pids = memory, cpus, pids
         self.name = f"agentbox-{uuid.uuid4().hex[:8]}"
         self.started = False
+        self.resource_stats = resource_stats   # adds about a second per step
+        self.events = EventCounter()
+        self._events_proc = None
 
     def describe(self) -> dict:
         return {"backend": "docker", "image": self.image, "network": self.network,
                 "memory": self.memory, "cpus": self.cpus, "pids_limit": self.pids,
-                "read_only_rootfs": True, "cap_drop": "ALL"}
+                "read_only_rootfs": True, "cap_drop": "ALL", "resource_stats": self.resource_stats}
 
     def start(self):
         if not docker_available():
@@ -65,11 +70,60 @@ class DockerSandbox:
         if r.returncode != 0:
             raise DockerNotAvailable(f"Could not start container: {r.stderr.strip()}")
         self.started = True
+        self._start_event_watcher()
 
     def stop(self):
         if self.started:
+            self._stop_event_watcher()
             subprocess.run(["docker", "rm", "-f", self.name], capture_output=True)
             self.started = False
+
+    def _start_event_watcher(self):
+        """Follow `docker events` for this container (host side, so the agent cannot touch it)."""
+        since = str(int(time.time()) - 2)     # --since avoids missing events during start-up
+        try:
+            proc = subprocess.Popen(
+                ["docker", "events", "--since", since, "--filter", f"container={self.name}",
+                 "--format", "{{json .}}"],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        except OSError:
+            return
+        self._events_proc = proc
+
+        def pump():
+            for line in proc.stdout:
+                self.events.feed(line)
+
+        threading.Thread(target=pump, daemon=True).start()
+
+    def _stop_event_watcher(self):
+        if self._events_proc is not None:
+            self._events_proc.terminate()
+            self._events_proc = None
+
+    def _snapshot(self, oom_before: int, code: int, exceeded: bool) -> dict:
+        """What Docker says about the container after a step. Never raises."""
+        snap: dict = {}
+        try:
+            r = subprocess.run(["docker", "inspect", "--format", "{{json .State}}", self.name],
+                               capture_output=True, text=True, timeout=15)
+            snap.update(parse_state(r.stdout))
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        if self.resource_stats and snap.get("running", True):
+            try:
+                r = subprocess.run(["docker", "stats", "--no-stream", "--format", "{{json .}}", self.name],
+                                   capture_output=True, text=True, timeout=30)
+                lines = r.stdout.strip().splitlines()
+                snap.update(parse_stats(lines[0] if lines else ""))
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        if code == 137 and not exceeded:        # a kill: give the OOM event a moment to arrive
+            deadline = time.monotonic() + 2.0
+            while self.events.count("oom") == oom_before and time.monotonic() < deadline:
+                time.sleep(0.1)
+        snap["oom_events"] = self.events.count("oom") - oom_before
+        return snap
 
     def _kill_stragglers(self):
         """Kill everything in the container except PID 1 (the idle `sleep`)."""
@@ -86,11 +140,14 @@ class DockerSandbox:
         argv = ["docker", "exec", "-w", "/workspace", self.name,
                 "timeout", "-k", "2", str(timeout_s),
                 "bash", "--noprofile", "--norc", "-c", cmd]
+        oom_before = self.events.count("oom")
         t0 = time.monotonic()
         # The in-container `timeout` is the normal deadline (exit 124); the host-side
         # deadline is a backstop if `docker exec` itself hangs.
         code, out, err, timed_out, exceeded = run_streaming(
             argv, cwd=None, timeout_s=timeout_s + 10, max_bytes=max_output_bytes,
             cleanup=self._kill_stragglers)
-        return build_observation(cmd, code, out, err, timed_out or code == 124, exceeded,
-                                 self.workspace, int((time.monotonic() - t0) * 1000))
+        obs = build_observation(cmd, code, out, err, timed_out or code == 124, exceeded,
+                                self.workspace, int((time.monotonic() - t0) * 1000))
+        obs["sandbox"] = self._snapshot(oom_before, code, exceeded)
+        return obs
