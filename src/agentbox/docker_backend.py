@@ -21,6 +21,19 @@ class DockerNotAvailable(RuntimeError):
     pass
 
 
+def container_user() -> str:
+    """The uid:gid the container runs as.
+
+    Unix: the host user, so the mounted workspace stays writable.
+    Windows has no uid or gid. Docker Desktop makes bind mounts writable for any user,
+    so a fixed non-root user is used. The sandbox is never run as root by default.
+    """
+    getuid, getgid = getattr(os, "getuid", None), getattr(os, "getgid", None)
+    if getuid and getgid:
+        return f"{getuid()}:{getgid()}"
+    return "1000:1000"
+
+
 def docker_available() -> bool:
     try:
         r = subprocess.run(["docker", "info"], capture_output=True, timeout=20)
@@ -31,20 +44,21 @@ def docker_available() -> bool:
 
 class DockerSandbox:
     def __init__(self, workspace="./workspace-docker", image=DEFAULT_IMAGE,
-                 network="none", memory="512m", cpus="1", pids=128, resource_stats=True):
+                 network="none", memory="512m", cpus="1", pids=128, resource_stats=True, user=None):
         self.workspace = os.path.abspath(workspace)
         self.image, self.network = image, network
         self.memory, self.cpus, self.pids = memory, cpus, pids
         self.name = f"agentbox-{uuid.uuid4().hex[:8]}"
         self.started = False
         self.resource_stats = resource_stats   # adds about a second per step
+        self.user = user or container_user()   # "uid:gid"; override if needed
         self.events = EventCounter()
         self._events_proc = None
 
     def describe(self) -> dict:
         return {"backend": "docker", "image": self.image, "network": self.network,
                 "memory": self.memory, "cpus": self.cpus, "pids_limit": self.pids,
-                "read_only_rootfs": True, "cap_drop": "ALL", "resource_stats": self.resource_stats}
+                "read_only_rootfs": True, "cap_drop": "ALL", "resource_stats": self.resource_stats, "user": self.user}
 
     def start(self):
         if not docker_available():
@@ -60,7 +74,7 @@ class DockerSandbox:
             "--pids-limit", str(self.pids),
             "--memory", self.memory, "--memory-swap", self.memory,
             "--cpus", str(self.cpus),
-            "--user", f"{os.getuid()}:{os.getgid()}",
+            "--user", self.user,
             "-e", "HOME=/tmp",
             "-v", f"{self.workspace}:/workspace",
             "-w", "/workspace",
