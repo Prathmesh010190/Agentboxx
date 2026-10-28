@@ -7,6 +7,7 @@ import time
 from .error_signatures import extract_go, extract_node
 from .redact import redact_all
 from .streaming import DEFAULT_MAX_STREAM_BYTES, run_streaming
+from .workspace import workspace_hash
 
 _NORMALIZERS = [
     (re.compile(r"0x[0-9a-fA-F]+"), "<HEX>"),
@@ -37,25 +38,11 @@ def error_signature(stderr: str, exit_code: int):
         if found:
             cls, msg = found
             return f"{cls}:{fingerprint(cls + ' ' + msg)}", cls
-    last = [l for l in stderr.strip().splitlines() if l.strip()][-3:]
+    last = [ln for ln in stderr.strip().splitlines() if ln.strip()][-3:]
     classes = _ERR_CLASS.findall(stderr)
     cls = classes[-1] if classes else None
     sig = fingerprint("\n".join(last))
     return (f"{cls}:{sig}" if cls else sig), cls
-
-
-def workspace_hash(root: str) -> str:
-    h = hashlib.sha256()
-    for dp, dn, fn in os.walk(root):
-        dn[:] = sorted(d for d in dn if d not in {".git", "__pycache__", "node_modules"})
-        for f in sorted(fn):
-            p = os.path.join(dp, f)
-            try:
-                with open(p, "rb") as fh:
-                    h.update(p.encode() + hashlib.sha256(fh.read()).digest())
-            except OSError:
-                pass
-    return h.hexdigest()[:16]
 
 
 def _clip(s: str) -> dict:
