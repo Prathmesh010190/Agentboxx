@@ -165,7 +165,7 @@ def test_list_shows_session_steps_and_status(tmp_path, capsys):
     bad = _session(tmp_path, name="bad")
     bad.write_text(bad.read_text().replace("echo hi", "echo HI", 1))
     assert cli.main(["list", str(tmp_path / "runs")]) == 0
-    rows = {l.split()[0]: l for l in capsys.readouterr().out.splitlines()[1:]}
+    rows = {ln.split()[0]: ln for ln in capsys.readouterr().out.splitlines()[1:]}
     assert rows["good"].split()[-1] == "OK" and " 2 " in rows["good"]
     assert rows["open"].split()[-1] == "INCOMPLETE"
     assert rows["bad"].split()[-1] == "TAMPERED"
@@ -178,7 +178,7 @@ def test_list_ignores_manifest_files_and_handles_empty_logs(tmp_path, capsys):
     assert cli.main(["list", str(tmp_path / "runs")]) == 0
     lines = capsys.readouterr().out.splitlines()
     assert len(lines) == 3                                  # header + two logs
-    assert any(l.startswith("blank") and l.endswith("EMPTY") for l in lines)
+    assert any(ln.startswith("blank") and ln.endswith("EMPTY") for ln in lines)
 
 
 def test_list_empty_directory(tmp_path, capsys):

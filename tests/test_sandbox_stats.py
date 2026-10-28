@@ -57,7 +57,7 @@ class FakeSandbox:
 
 
 def _events(rec):
-    return [json.loads(l)["event"] for l in rec.log_path.read_text().splitlines()]
+    return [json.loads(ln)["event"] for ln in rec.log_path.read_text().splitlines()]
 
 
 def _recorder(tmp_path, snapshot):

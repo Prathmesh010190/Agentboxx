@@ -75,7 +75,7 @@ def test_secret_never_reaches_signed_log(tmp_path):
     rec.close("done")
     text = rec.log_path.read_text()
     assert "supersecret99" not in text and "otherSecret77" not in text
-    step = [json.loads(l)["event"] for l in text.splitlines()
-            if '"event_type": "step"' in l][0]["data"]
+    step = [json.loads(ln)["event"] for ln in text.splitlines()
+            if '"event_type": "step"' in ln][0]["data"]
     assert step["redactions"]["secret_assignment"] >= 2
     assert verify_log(rec.log_path, load_or_create_key(tmp_path / "key")) == ([], [])
