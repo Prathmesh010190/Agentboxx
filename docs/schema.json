@@ -1,0 +1,473 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Prathmesh010190/Agentboxx/blob/main/docs/schema.json",
+  "title": "agentbox log record",
+  "description": "One line of an agentbox .ndjson log. See docs/log-format.md for the hash chain and signature rules, which JSON Schema cannot express.",
+  "type": "object",
+  "required": [
+    "event",
+    "prev_hash",
+    "hash",
+    "sig"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "$ref": "#/$defs/event"
+    },
+    "prev_hash": {
+      "$ref": "#/$defs/hex64"
+    },
+    "hash": {
+      "$ref": "#/$defs/hex64"
+    },
+    "sig": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "hex64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "stream": {
+      "type": "object",
+      "required": [
+        "text",
+        "total_chars",
+        "sha256"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Redacted output; only the head and tail are kept when truncated"
+        },
+        "total_chars": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Bytes seen on the stream (kept for compatibility)"
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": "string",
+          "description": "SHA-256 of the stored (redacted) text"
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "event_id",
+        "event_type",
+        "ts",
+        "seq",
+        "data"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Readers must accept unknown event types"
+        },
+        "ts": {
+          "type": "number",
+          "description": "Unix time in seconds"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1, 2, 3... with no gaps"
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "session.start"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/session_start"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "step"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/step"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "analysis.signal"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/analysis_signal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "sandbox.resource"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/sandbox_resource"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "sandbox.crash"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/sandbox_crash"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "session.end"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/session_end"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "session_start": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "isolation"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "agent_id": {
+          "type": "string"
+        },
+        "isolation": {
+          "type": "object",
+          "required": [
+            "backend"
+          ],
+          "properties": {
+            "backend": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "step_index",
+        "thought",
+        "command",
+        "command_fingerprint",
+        "exit_code",
+        "timed_out",
+        "stdout",
+        "stderr",
+        "error_signature",
+        "error_class",
+        "workspace_hash",
+        "duration_ms"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "step_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "thought": {
+          "type": "string",
+          "description": "The model's reasoning, redacted"
+        },
+        "command": {
+          "type": "string",
+          "description": "Redacted"
+        },
+        "command_fingerprint": {
+          "type": "string"
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "124 = timeout, 137 = output cap, other values as returned"
+        },
+        "timed_out": {
+          "type": "boolean"
+        },
+        "output_limit_exceeded": {
+          "type": "boolean"
+        },
+        "stdout": {
+          "$ref": "#/$defs/stream"
+        },
+        "stderr": {
+          "$ref": "#/$defs/stream"
+        },
+        "error_signature": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "error_class": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "workspace_hash": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "redactions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Count of secrets removed per pattern, never the values"
+        },
+        "agent_id": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "parent_step_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "usage": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Token counts supplied by the caller, never computed by agentbox"
+        }
+      }
+    },
+    "analysis_signal": {
+      "type": "object",
+      "required": [
+        "step_index",
+        "kind",
+        "severity",
+        "count",
+        "hint"
+      ],
+      "properties": {
+        "step_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warn",
+            "critical"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hint": {
+          "type": "string"
+        }
+      }
+    },
+    "sandbox_resource": {
+      "type": "object",
+      "required": [
+        "step_index"
+      ],
+      "properties": {
+        "step_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mem_bytes": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "mem_limit_bytes": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "mem_pct": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "cpu_pct": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "pids": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "sandbox_crash": {
+      "type": "object",
+      "required": [
+        "step_index",
+        "kind"
+      ],
+      "properties": {
+        "step_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "type": "string",
+          "description": "oom_kill or container_stopped"
+        },
+        "exit_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "oom_killed": {
+          "type": "boolean"
+        },
+        "oom_events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "session_end": {
+      "type": "object",
+      "required": [
+        "reason",
+        "steps"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

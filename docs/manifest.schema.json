@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Prathmesh010190/Agentboxx/blob/main/docs/manifest.schema.json",
+  "title": "agentbox closing manifest",
+  "description": "<session>.manifest.json, written when a session closes. See docs/log-format.md.",
+  "type": "object",
+  "required": [
+    "payload",
+    "sig"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "type": "object",
+      "required": [
+        "log",
+        "records",
+        "final_hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "log": {
+          "type": "string"
+        },
+        "records": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "final_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "sig": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
