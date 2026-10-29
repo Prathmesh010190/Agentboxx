@@ -181,6 +181,10 @@ Limits to know about:
 - Files in the workspace are not logged, but anything a command prints from them is covered by these patterns only.
 - Add your own patterns with `agentbox.redact.add_pattern(name, regex)`.
 
+## Log format
+
+The log format is documented in [docs/log-format.md](docs/log-format.md) and described by JSON Schemas ([record](docs/schema.json), [manifest](docs/manifest.schema.json)). [examples/verify_standalone.py](examples/verify_standalone.py) verifies a log using only the Python standard library, as an independent check that the spec is complete.
+
 ## Threat model
 
 - **Docker backend:** commands run as a non-root user in a container with no network, a read-only root filesystem, all Linux capabilities dropped, `no-new-privileges`, and CPU, memory and process limits. The signing key and logs stay on the host and are never mounted into the container.

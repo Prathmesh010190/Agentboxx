@@ -26,7 +26,7 @@ Legend: **built** exists on `main`, **planned** is a goal, not a feature.
 | 1 | Task contract | none | goal, step / time / output limits, host-run success check, allowed commands |
 | 2 | Recorder core | redaction, fingerprints, error signatures, output cap, process-tree kill | per-run budgets, policy checks |
 | 3 | Analysis | repeat, error, no-progress and cycle detectors, hint feedback | drift detector, plugin interface, intervention ladder |
-| 4 | Evidence layer | hash chain, HMAC signatures, signed closing manifest, `verify` | Ed25519 run receipt, JSON Schema, `docs/log-format.md` |
+| 4 | Evidence layer | hash chain, HMAC signatures, signed closing manifest, `verify`, JSON Schema, `docs/log-format.md`, standalone verifier | Ed25519 run receipt |
 | 5 | Sandbox backends | local, Docker, resource and crash events (Docker) | gVisor, bubblewrap, egress proxy |
 | 6 | Exporters and verifier | `report`, `list`, `verify`, `demo` | JSON, HTML replay, OpenTelemetry |
 | 7 | Adapters | scripted model, Anthropic adapter (unvalidated) | other providers, `agentbox run -- <command>` |
