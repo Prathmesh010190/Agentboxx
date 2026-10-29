@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import __version__
 from .signer import load_or_create_key, verify_log
+from .report import build_report_data, render_text, render_json, render_html
 
 EXIT_OK = 0
 EXIT_TAMPERED = 1
@@ -105,28 +106,27 @@ def _read_events(path) -> list:
 
 def cmd_report(args) -> int:
     events = _read_events(args.logfile)
-    color = _use_color()
-    steps, signals = 0, []
+    fmt = getattr(args, "format", "text") or "text"
+    out_path = getattr(args, "output", None)
     try:
-        for ev in events:
-            if ev["event_type"] == "step":
-                steps += 1
-                d = ev["data"]
-                ok = d["exit_code"] == 0
-                mark = "ok " if ok else _paint("ERR", _RED, color)
-                print(f"[{d['step_index']:>3}] {mark} exit={d['exit_code']:<3} {d['command'][:70]}")
-            elif ev["event_type"] == "analysis.signal":
-                signals.append(ev["data"])
-        print(f"\n{steps} steps, {len(signals)} signals")
-        for s in signals:
-            line = f"  step {s['step_index']}: [{s['severity']}] {s['kind']} (x{s['count']}) - {s['hint']}"
-            if s["severity"] == "critical":
-                line = _paint(line, _RED, color)
-            elif s["severity"] == "warn":
-                line = _paint(line, _YELLOW, color)
-            print(line)
+        data = build_report_data(events)
+        if fmt == "json":
+            rendered = render_json(data)
+        elif fmt == "html":
+            rendered = render_html(data)
+        else:
+            color = _use_color(stream=sys.stdout if not out_path else None)
+            rendered = render_text(data, color=color)
     except (KeyError, TypeError) as e:
         raise CliError(f"{args.logfile}: a record is missing the field {e}")
+
+    if out_path and out_path != "-":
+        try:
+            Path(out_path).write_text(rendered, encoding="utf-8")
+        except OSError as e:
+            raise CliError(f"cannot write to {out_path}: {getattr(e, 'strerror', None) or e}")
+    else:
+        print(rendered, end="")
     return EXIT_OK
 
 
@@ -217,6 +217,17 @@ def build_parser() -> argparse.ArgumentParser:
     v.set_defaults(fn=cmd_verify)
     r = sub.add_parser("report", help="print a readable summary")
     r.add_argument("logfile")
+    r.add_argument(
+        "--format", "-f",
+        choices=["text", "json", "html"],
+        default="text",
+        help="output format (text, json, html; default: text)",
+    )
+    r.add_argument(
+        "--output", "-o",
+        default=None,
+        help="write report to a file instead of stdout",
+    )
     r.set_defaults(fn=cmd_report)
     ls = sub.add_parser("list", help="list the logs in a directory (default: ./runs)")
     ls.add_argument("directory", nargs="?", default="runs")
