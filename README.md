@@ -76,7 +76,7 @@ agentbox list                            # every log in ./runs: session, start t
 agentbox --version
 ~~~
 
-`report` uses color for errors and warnings when writing to a terminal. Set `NO_COLOR=1` to turn it off.
+`report` uses color for errors and warnings when writing to a terminal. Set `NO_COLOR=1` to turn it off. It supports `--format text|json|html` (default: `text`) and `--output <file>` (or `-o`) to export reports; HTML reports are completely self-contained with no external assets.
 
 ### Example: a stuck agent recovers
 
@@ -213,7 +213,7 @@ The log format is documented in [docs/log-format.md](docs/log-format.md) and des
 - [x] Sandbox resource and crash events (Docker backend)
 - [ ] Public-key signing so third parties can verify logs
 - [ ] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
-- [ ] Network egress capture
+- [ ] Network egress capture (design in [docs/network-egress.md](docs/network-egress.md))
 - [ ] Semantic drift detector
 - [ ] Session replay UI
 - [ ] Threshold calibration on recorded sessions

@@ -66,7 +66,7 @@ src/agentbox/
   agents/      loop, models/
   export/      report, otel, html
   cli/
-docs/          log-format.md, schema.json, threat-model.md, architecture.md, vision.md
+docs/          log-format.md, schema.json, network-egress.md, threat-model.md, architecture.md, vision.md
 ~~~
 
 Files move in one mechanical change after the interfaces exist, so open pull requests are not disrupted.
