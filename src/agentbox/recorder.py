@@ -19,16 +19,22 @@ class Recorder:
     def __init__(self, session_id: str, workspace: str = "./workspace",
                  log_dir: str = "./runs", key_path=None,
                  loop_cfg: LoopConfig | None = None, sandbox=None,
-                 overwrite: bool = False):
+                 overwrite: bool = False, agent_id: str | None = None):
         self.session_id, self.workspace, self.sandbox = session_id, workspace, sandbox
+        self.agent_id = agent_id
         self.log_path = Path(log_dir) / f"{session_id}.ndjson"
         self.writer = ChainWriter(self.log_path, load_or_create_key(key_path), overwrite=overwrite)
         self.detector = LoopDetector(loop_cfg)
         self.step_index = 0
         isolation = sandbox.describe() if sandbox else {"backend": "local"}
-        self.writer.append("session.start", {"session_id": session_id, "isolation": isolation})
+        start = {"session_id": session_id, "isolation": isolation}
+        if agent_id:
+            start["agent_id"] = agent_id
+        self.writer.append("session.start", start)
 
-    def run(self, command: str, thought: str = "", timeout_s: int = 60) -> dict:
+    def run(self, command: str, thought: str = "", timeout_s: int = 60, *,
+            tool: str | None = None, parent_step: int | None = None,
+            usage: dict | None = None) -> dict:
         self.step_index += 1
         if self.sandbox:
             obs = self.sandbox.run(command, timeout_s)
@@ -39,6 +45,14 @@ class Recorder:
         redactions = merge_counts(obs.get("redactions", {}), t_counts)
         step = {"session_id": self.session_id, "step_index": self.step_index,
                 "thought": thought, **obs, "redactions": redactions}
+        if self.agent_id:
+            step["agent_id"] = self.agent_id
+        if tool:
+            step["tool"] = tool
+        if parent_step is not None:
+            step["parent_step_index"] = int(parent_step)
+        if usage:
+            step["usage"] = {str(k): int(v) for k, v in usage.items()}   # from the caller, never computed
         self.writer.append("step", step)
         if sbx:
             metrics = {k: sbx.get(k) for k in ("mem_bytes", "mem_limit_bytes", "mem_pct", "cpu_pct", "pids")}
