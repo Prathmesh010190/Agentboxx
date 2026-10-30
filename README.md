@@ -9,12 +9,12 @@ Run agent commands in an isolated sandbox, record what actually happened, sign e
 [![CI](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)
-![Status](https://img.shields.io/badge/status-early%20prototype-orange.svg)
+![Status](https://img.shields.io/badge/status-MVP-green.svg)
 
 </div>
 
 > [!NOTE]
-> **v0.1, early research prototype.** Interfaces will change and it is not production-ready. Known gaps are listed under [Limitations](#limitations).
+> **v0.2 MVP.** Working prototype validated end-to-end with sandboxed execution, cryptographic signing, loop detection, and live model execution. Interfaces may evolve before v1.0. Known gaps are listed under [Limitations](#limitations).
 
 ---
 
@@ -126,7 +126,7 @@ print(result["signals"])                 # loop warnings, if any
 rec.close("done")                        # also stops the container
 ~~~
 
-`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`) and has **not yet been validated against the live API** ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5)).
+`agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `GeminiModel` connects to Google Gemini via standard-library REST (needs `GEMINI_API_KEY`, validated end-to-end). `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`).
 
 ## What `agentbox verify` reports
 
@@ -212,7 +212,7 @@ The log format is documented in [docs/log-format.md](docs/log-format.md) and des
 - [ ] Output size cap and process-tree kill on timeout
 - [x] Sandbox resource and crash events (Docker backend)
 - [ ] Public-key signing so third parties can verify logs
-- [ ] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
+- [x] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
 - [ ] Network egress capture (design in [docs/network-egress.md](docs/network-egress.md))
 - [ ] Semantic drift detector
 - [ ] Session replay UI
