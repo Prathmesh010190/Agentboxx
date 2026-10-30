@@ -61,6 +61,47 @@ class AnthropicModel:
             return {"thought": "unparseable reply", "final": text[:500]}
 
 
+
+class GeminiModel:
+    """Real model via the Google Gemini REST API (stdlib only, no SDK needed).
+    Needs the GEMINI_API_KEY environment variable."""
+
+    def __init__(self, model="gemini-flash-lite-latest"):
+        import os
+        key = os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise RuntimeError("set the GEMINI_API_KEY environment variable")
+        self._model = model
+        self._url = (
+            f"https://generativelanguage.googleapis.com/v1beta/"
+            f"models/{model}:generateContent?key={key}"
+        )
+
+    def next_action(self, messages):
+        import urllib.request
+        contents = []
+        for m in messages:
+            role = "model" if m["role"] == "assistant" else "user"
+            contents.append({"role": role, "parts": [{"text": m["content"]}]})
+        body = json.dumps({
+            "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+            "contents": contents,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            self._url, data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if text.startswith("```"):
+            text = text.strip("`").removeprefix("json").strip()
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {"thought": "unparseable reply", "final": text[:500]}
+
+
 def _format_observation(obs: dict) -> str:
     return (f"exit_code={obs['exit_code']}\n"
             f"stdout:\n{obs['stdout']['text'][-1500:]}\n"
