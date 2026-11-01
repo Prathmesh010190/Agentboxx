@@ -137,7 +137,7 @@ rec.close("done")                        # also stops the container
 | `INCOMPLETE` | 2 | The log is intact so far but was never closed: a crash, a running session, or a removed tail |
 | *(error)* | 3 | The file is missing, empty, a directory or unreadable. This is not a verdict on the log, and `report` uses the same code |
 
-The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. Limits: if someone truncates the log and also deletes the manifest, the result is `INCOMPLETE` rather than `TAMPERED`, because that looks like a crash. Anyone who can read the signing key can forge both files, so copy manifests somewhere the agent host cannot write to if that matters. Public-key signing, as used for Nanda Town's evidence attestations, would let third parties verify logs without holding a secret, and is a possible future change.
+The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. The verifier requires the manifest: a closed session whose manifest is missing is reported as `INCOMPLETE`, and a truncated log whose manifest is still present is reported as `TAMPERED`. Anyone who can read the signing key can forge both files, so copy manifests somewhere the agent host cannot write to if that matters. Public-key signing, as used for Nanda Town's evidence attestations, would let third parties verify logs without holding a secret, and is a possible future change.
 
 ## Detection signals
 

@@ -138,7 +138,11 @@ def verify_log(path, key: bytes):
                     f"records ending in {payload['final_hash'][:12]}): truncated or modified")
         except (OSError, ValueError, KeyError, TypeError):
             problems.append("manifest is unreadable")
-    elif last.get("type") != "session.end":
-        incomplete.append("no session.end record and no manifest: the session crashed, "
-                          "is still running, or the end of the log was removed")
+    else:
+        if last.get("type") != "session.end":
+            incomplete.append("no session.end record and no manifest: the session crashed, "
+                              "is still running, or the end of the log was removed")
+        else:
+            incomplete.append("session is closed but its manifest is missing: "
+                              "the manifest may have been deleted")
     return problems, incomplete

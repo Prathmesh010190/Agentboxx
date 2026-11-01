@@ -238,6 +238,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    if argv is not None:
+        argv = [str(a) for a in argv]
     args = build_parser().parse_args(argv)
     try:
         return args.fn(args)
