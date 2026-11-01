@@ -3,13 +3,36 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentbox"
+name = "agentboxx"
 version = "0.2.1"
 description = "A tamper-evident flight recorder for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+authors = [
+    { name = "Prathmesh Kokate", email = "prathmeshkokate775@gmail.com" },
+]
+keywords = ["ai", "agents", "security", "audit", "flight-recorder", "tamper-evident", "sandbox"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Logging",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Prathmesh010190/Agentboxx"
+Repository = "https://github.com/Prathmesh010190/Agentboxx"
+Issues = "https://github.com/Prathmesh010190/Agentboxx/issues"
+Documentation = "https://github.com/Prathmesh010190/Agentboxx/tree/main/docs"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "ruff", "jsonschema"]

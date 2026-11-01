@@ -50,6 +50,12 @@ Most agent tooling records what the agent *says* it did, from inside the agent's
 Requires Python 3.10+. Docker is optional and used by the sandbox demos.
 
 ~~~bash
+pip install agentboxx
+~~~
+
+Or install from source:
+
+~~~bash
 git clone https://github.com/Prathmesh010190/Agentboxx.git
 cd Agentboxx
 python3 -m venv .venv && source .venv/bin/activate
