@@ -1,6 +1,8 @@
 """Runs a shell command and observes it from the outside."""
 import hashlib
 import os
+import sys
+import shutil
 import re
 import time
 
@@ -91,12 +93,31 @@ def build_observation(cmd, code, out, err, timed_out, exceeded, workspace, durat
     }
 
 
+def _find_bash() -> str:
+    """Find a real bash executable, avoiding the Windows WSL stub in System32."""
+    if sys.platform == "win32" or os.name == "nt":
+        for candidate in [
+            "C:/Program Files/Git/bin/bash.exe",
+            "C:/Program Files/Git/usr/bin/bash.exe",
+            "C:/Program Files (x86)/Git/bin/bash.exe",
+            "C:/Program Files (x86)/Git/usr/bin/bash.exe",
+        ]:
+            if os.path.exists(candidate):
+                return candidate
+
+        found = shutil.which("bash")
+        if found and "system32" not in found.lower():
+            return found
+
+    return shutil.which("bash") or "bash"
+
+
 def run_command(cmd: str, workspace: str, timeout_s: int = 60,
                 max_output_bytes: int = DEFAULT_MAX_STREAM_BYTES) -> dict:
     os.makedirs(workspace, exist_ok=True)
     t0 = time.monotonic()
     code, out, err, timed_out, exceeded = run_streaming(
-        ["bash", "--noprofile", "--norc", "-c", cmd],
+        [_find_bash(), "--noprofile", "--norc", "-c", cmd],
         cwd=workspace, timeout_s=timeout_s, max_bytes=max_output_bytes)
     return build_observation(cmd, code, out, err, timed_out, exceeded, workspace,
                              int((time.monotonic() - t0) * 1000))
