@@ -200,7 +200,7 @@ The log format is documented in [docs/log-format.md](docs/log-format.md) and des
 
 ## Limitations
 
-- Windows is experimental. The Docker backend no longer needs Unix user IDs and runs as user `1000:1000` in the container (override with `DockerSandbox(user=...)`), but it has not been run on real Windows hardware yet. It needs Docker Desktop with Linux containers. The local backend still needs `bash` (Git Bash), and on Windows a timeout kills only the direct child process.
+- Windows is supported and tested in CI (Python 3.11–3.13 on `windows-latest`). Process-tree termination uses `taskkill /F /T` to kill runaway commands and all their children. The Docker backend runs as user `1000:1000` in the container (override with `DockerSandbox(user=...)`); Docker Desktop with Linux containers is required. The local backend needs `bash` (Git Bash) on PATH.
 - Detector thresholds are initial values, not calibrated on real agent traces.
 - No network capture yet (the sandbox simply has no network).
 - No semantic drift detection yet; detection is command and state based.
