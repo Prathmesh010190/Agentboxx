@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 
-from agentbox.streaming import Capture, kill_tree, run_streaming
+from agentbox.streaming import kill_tree, run_streaming
 
 
 # ---------------------------------------------------------------------------
