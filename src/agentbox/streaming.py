@@ -58,14 +58,32 @@ class Capture:
 
 
 def kill_tree(proc: subprocess.Popen):
-    """SIGKILL the command's whole process group (it was started in its own session)."""
+    """Kill the command and its entire process tree.
+
+    On POSIX the process was started in its own session, so killpg() reaches
+    every descendant.  On Windows, ``taskkill /F /T`` walks the process tree
+    and forcefully terminates every child.  If the process already exited
+    before we get here, the resulting error is silently ignored.
+    """
     try:
         if os.name == "posix":
             os.killpg(proc.pid, signal.SIGKILL)
         else:
-            proc.kill()
+            # /F = force, /T = tree (kill all child processes too)
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                capture_output=True,
+                timeout=10,
+            )
     except OSError:
+        # Process already exited or PID not found — nothing to kill.
         pass
+    except subprocess.TimeoutExpired:
+        # taskkill itself hung (very rare); fall back to direct kill.
+        try:
+            proc.kill()
+        except OSError:
+            pass
 
 
 def run_streaming(argv, cwd, timeout_s, max_bytes=DEFAULT_MAX_STREAM_BYTES, cleanup=None):
