@@ -1,10 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
-  <!-- Left Architectural Slab -->
-  <polygon points="26,134 58,134 88,30 56,30" fill="#E05626"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Soft Anti-Gravity Levitation Shadow -->
+    <filter id="levitateShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#E05626" flood-opacity="0.28"/>
+    </filter>
+  </defs>
 
-  <!-- Right Intersecting Vault Slab -->
-  <polygon points="68,76 134,76 112,134 82,134" fill="#E05626"/>
+  <g transform="translate(2, 0)">
+    <!-- 1. The Lower Vault (Ground Box) -->
+    <!-- Vault Interior (Dark Obsidian) -->
+    <polygon points="50,96 100,68 150,96 100,124" fill="#18181B"/>
 
-  <!-- Top Vault Cross-Plane -->
-  <polygon points="76,30 114,30 134,76 96,76" fill="#C84417"/>
+    <!-- Vault Left Wall (Anthropic Terracotta) -->
+    <polygon points="50,96 100,124 100,172 50,144" fill="#E05626"/>
+
+    <!-- Vault Right Wall (Deep Rust Shadow) -->
+    <polygon points="100,124 150,96 150,144 100,172" fill="#B33A15"/>
+
+    <!-- Isolated Zero-G Telemetry Core suspended inside -->
+    <circle cx="100" cy="98" r="6" fill="#FFA07A"/>
+    <circle cx="100" cy="98" r="14" fill="none" stroke="#FFA07A" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+
+    <!-- 2. The Floating Anti-Gravity Lid (Weightless Slab) -->
+    <g filter="url(#levitateShadow)">
+      <!-- Lid Top Face (Vibrant Anthropic Coral) -->
+      <polygon points="100,28 150,56 100,84 50,56" fill="#FF6E38"/>
+      <!-- Lid Left Thickness -->
+      <polygon points="50,56 100,84 100,92 50,64" fill="#E05626"/>
+      <!-- Lid Right Thickness -->
+      <polygon points="100,84 150,56 150,64 100,92" fill="#C44118"/>
+    </g>
+  </g>
 </svg>
