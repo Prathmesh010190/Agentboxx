@@ -1,4 +1,4 @@
-"""Command-line interface: verify, report, list and demo."""
+"""Command-line interface: verify, report, list, demo and keygen."""
 import argparse
 import json
 import os
@@ -9,7 +9,14 @@ from datetime import datetime
 from pathlib import Path
 
 from . import __version__
-from .signer import load_or_create_key, verify_log
+from .signer import (
+    DEFAULT_ED25519_PUB_PATH,
+    generate_ed25519_keypair,
+    load_or_create_key,
+    receipt_path,
+    verify_log,
+    verify_receipt,
+)
 from .report import build_report_data, render_text, render_json, render_html
 
 EXIT_OK = 0
@@ -82,7 +89,55 @@ def _verify_and_print(path, key=None) -> int:
 
 
 def cmd_verify(args) -> int:
-    return _verify_and_print(args.logfile)
+    _check_readable(args.logfile)
+
+    receipt_file = getattr(args, "receipt", None)
+    pubkey = getattr(args, "pubkey", None)
+
+    # If --pubkey or --receipt is explicitly provided, verify using Ed25519 receipt
+    if receipt_file or pubkey:
+        if not receipt_file:
+            receipt_file = receipt_path(args.logfile)
+        if not pubkey:
+            if DEFAULT_ED25519_PUB_PATH.exists():
+                pubkey = DEFAULT_ED25519_PUB_PATH
+            else:
+                raise CliError("receipt verification requires --pubkey <path_or_hex>")
+
+        problems, payload = verify_receipt(args.logfile, receipt_file, pubkey)
+        if problems:
+            print("RECEIPT VERIFICATION FAILED (tampered or corrupt):")
+            for p in problems:
+                print("  -", p)
+            return EXIT_TAMPERED
+        key_id = payload.get("key_id", "unknown") if payload else "unknown"
+        records = payload.get("record_count", 0) if payload else 0
+        print(f"OK: Ed25519 receipt verified ({records} records, key ID {key_id}). Log is intact.")
+        return EXIT_OK
+
+    # Standard HMAC verification mode
+    key = None
+    if getattr(args, "key", None):
+        p = Path(args.key)
+        if not p.exists():
+            raise CliError(f"HMAC key file not found: {args.key}")
+        key = bytes.fromhex(p.read_text().strip())
+    return _verify_and_print(args.logfile, key)
+
+
+def cmd_keygen(args) -> int:
+    key_dir = Path(args.dir) if args.dir else Path.home() / ".agentbox"
+    key_path = key_dir / "ed25519.key"
+    pub_path = key_dir / "ed25519.pub"
+    if key_path.exists() and not getattr(args, "force", False):
+        raise CliError(f"key already exists at {key_path}. Use --force to overwrite.")
+    kp, pp = generate_ed25519_keypair(key_path=key_path, pub_path=pub_path)
+    pub_hex = pp.read_text(encoding="utf-8").strip()
+    print("Generated Ed25519 keypair:")
+    print(f"  Private key: {kp}")
+    print(f"  Public key:  {pp}")
+    print(f"  Public key (hex): {pub_hex}")
+    return EXIT_OK
 
 
 def _read_events(path) -> list:
@@ -212,9 +267,19 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agentbox")
     p.add_argument("--version", action="version", version=f"agentbox {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
+
     v = sub.add_parser("verify", help="check a log for tampering")
     v.add_argument("logfile")
+    v.add_argument("--receipt", "-r", default=None, help="path to .receipt.json")
+    v.add_argument("--pubkey", "-p", default=None, help="Ed25519 public key file or hex string")
+    v.add_argument("--key", "-k", default=None, help="HMAC symmetric key file")
     v.set_defaults(fn=cmd_verify)
+
+    k = sub.add_parser("keygen", help="generate an Ed25519 keypair for run receipts")
+    k.add_argument("--dir", default=None, help="directory to store keys (default: ~/.agentbox)")
+    k.add_argument("--force", "-f", action="store_true", help="overwrite existing keys")
+    k.set_defaults(fn=cmd_keygen)
+
     r = sub.add_parser("report", help="print a readable summary")
     r.add_argument("logfile")
     r.add_argument(
@@ -229,11 +294,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="write report to a file instead of stdout",
     )
     r.set_defaults(fn=cmd_report)
+
     ls = sub.add_parser("list", help="list the logs in a directory (default: ./runs)")
     ls.add_argument("directory", nargs="?", default="runs")
     ls.set_defaults(fn=cmd_list)
+
     d = sub.add_parser("demo", help="run a self-contained demo (no Docker, no API key)")
     d.set_defaults(fn=cmd_demo)
+
     return p
 
 

@@ -62,6 +62,50 @@ Commands, output and `thought` are redacted before they are hashed. `redactions`
 
 `sig` is `hmac_sha256_hex(key, canon(payload))`. `records` is the `seq` of the last record and `final_hash` is its `hash`. The manifest sits next to the log, named by replacing `.ndjson` with `.manifest.json`.
 
+
+## Run receipts (Ed25519)
+
+For third-party verification without sharing symmetric secrets, Agentbox generates an asymmetric Ed25519 receipt when closing a session:
+
+~~~json
+{
+  "payload": {
+    "version": 1,
+    "session_id": "example-session",
+    "log": "example.ndjson",
+    "record_count": 3,
+    "final_hash": "64 hex characters",
+    "key_id": "sha256:16-char-fingerprint",
+    "public_key": "64 hex characters (32 raw bytes)",
+    "started_at": 1730000000.123,
+    "closed_at": 1730000050.456
+  },
+  "signature": "128 hex characters (64 bytes Ed25519 signature)"
+}
+~~~
+
+`signature` is `ed25519_sign(private_key, canon(payload))`. The receipt sits next to the log as `<session>.receipt.json`.
+
+### Public-key verification
+
+Auditors verify the receipt with only the public key:
+1. Load public key from `ed25519.pub` or hex string.
+2. Verify `signature` over `canon(payload)` using Ed25519.
+3. Retrace the hash chain of `<session>.ndjson`: ensure every record's `hash` equals `sha256(prev_hash + sha256(canon(event)))`.
+4. Ensure the total records and final hash match `payload.record_count` and `payload.final_hash`.
+
+CLI verification:
+~~~bash
+# Generate keypair
+agentbox keygen
+
+# Verify run receipt using public key
+agentbox verify runs/example.ndjson --receipt runs/example.receipt.json --pubkey ~/.agentbox/ed25519.pub
+
+# Standalone verification (zero-dependency / standard library)
+python examples/verify_standalone.py runs/example.ndjson --receipt runs/example.receipt.json --pubkey ~/.agentbox/ed25519.pub
+~~~
+
 ## Verification
 
 Check the records first, then the manifest:

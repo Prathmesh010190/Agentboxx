@@ -4,7 +4,7 @@ from pathlib import Path
 from .executor import run_command
 from .loop_detector import LoopConfig, LoopDetector
 from .redact import merge_counts, redact
-from .signer import ChainWriter, load_or_create_key
+from .signer import ChainWriter, load_or_create_key, load_ed25519_private_key
 
 
 def _crash_kind(sbx: dict):
@@ -19,11 +19,18 @@ class Recorder:
     def __init__(self, session_id: str, workspace: str = "./workspace",
                  log_dir: str = "./runs", key_path=None,
                  loop_cfg: LoopConfig | None = None, sandbox=None,
-                 overwrite: bool = False, agent_id: str | None = None):
+                 overwrite: bool = False, agent_id: str | None = None,
+                 ed25519_key_path=None):
         self.session_id, self.workspace, self.sandbox = session_id, workspace, sandbox
         self.agent_id = agent_id
         self.log_path = Path(log_dir) / f"{session_id}.ndjson"
-        self.writer = ChainWriter(self.log_path, load_or_create_key(key_path), overwrite=overwrite)
+        self.ed25519_key = load_ed25519_private_key(ed25519_key_path)
+        self.writer = ChainWriter(
+            self.log_path,
+            load_or_create_key(key_path),
+            overwrite=overwrite,
+            ed25519_key=self.ed25519_key,
+        )
         self.detector = LoopDetector(loop_cfg)
         self.step_index = 0
         isolation = sandbox.describe() if sandbox else {"backend": "local"}
@@ -69,5 +76,7 @@ class Recorder:
     def close(self, reason: str = "done"):
         self.writer.append("session.end", {"reason": reason, "steps": self.step_index})
         self.writer.write_manifest()
+        if self.ed25519_key:
+            self.writer.write_receipt(session_id=self.session_id)
         if self.sandbox:
             self.sandbox.stop()
