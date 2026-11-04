@@ -38,7 +38,7 @@ Most agent tooling records what the agent *says* it did, from inside the agent's
 
 | Module | Role |
 |---|---|
-| `signer.py` | Hash-chained, HMAC-signed event log and `verify_file` |
+| `signer.py` | Hash-chained event log, HMAC signatures and Ed25519 run receipts |
 | `executor.py` | Local command runner, error fingerprints, workspace hashing |
 | `docker_backend.py` | Runs commands in a locked-down container |
 | `loop_detector.py` | Exact repeat, repeated error, no-progress and cycle detection |
@@ -76,8 +76,10 @@ python examples/demo_agent.py            # stuck-agent demo (local backend)
 python examples/demo_docker.py           # shows what the Docker sandbox blocks
 python examples/demo_agent_loop.py       # full pipeline: detect, hint, recover
 
+agentbox keygen                          # generate Ed25519 keypair (~/.agentbox/ed25519.pub)
 agentbox report runs/agent-demo.ndjson   # readable summary
-agentbox verify runs/agent-demo.ndjson   # integrity check
+agentbox verify runs/agent-demo.ndjson   # symmetric integrity check
+agentbox verify runs/agent-demo.ndjson --pubkey ~/.agentbox/ed25519.pub  # public-key receipt check
 agentbox list                            # every log in ./runs: session, start time, steps, verifies?
 agentbox --version
 ~~~
@@ -143,7 +145,7 @@ rec.close("done")                        # also stops the container
 | `INCOMPLETE` | 2 | The log is intact so far but was never closed: a crash, a running session, or a removed tail |
 | *(error)* | 3 | The file is missing, empty, a directory or unreadable. This is not a verdict on the log, and `report` uses the same code |
 
-The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. The verifier requires the manifest: a closed session whose manifest is missing is reported as `INCOMPLETE`, and a truncated log whose manifest is still present is reported as `TAMPERED`. Anyone who can read the signing key can forge both files, so copy manifests somewhere the agent host cannot write to if that matters. Public-key signing, as used for Nanda Town's evidence attestations, would let third parties verify logs without holding a secret, and is a possible future change.
+The manifest (`<session>.manifest.json`) is written when a session closes and records the final record count and hash, signed with the same key. The verifier requires the manifest: a closed session whose manifest is missing is reported as `INCOMPLETE`, and a truncated log whose manifest is still present is reported as `TAMPERED`. Anyone holding the symmetric signing key can verify HMAC signatures. For third-party and customer verification, Agentbox generates an asymmetric Ed25519 run receipt (`<session>.receipt.json`) on close. Auditors holding only the public key can verify that the run was executed and finalized by the keyholder without holding the private signing secret.
 
 ## Detection signals
 
@@ -215,9 +217,9 @@ The log format is documented in [docs/log-format.md](docs/log-format.md) and des
 - [x] Stable error signatures for Python, Node.js and Go
 - [x] Truncation detection with a signed closing manifest
 - [x] Secret redaction before signing
-- [ ] Output size cap and process-tree kill on timeout
+- [x] Output size cap and process-tree kill on timeout ([#22](https://github.com/Prathmesh010190/Agentboxx/issues/22))
 - [x] Sandbox resource and crash events (Docker backend)
-- [ ] Public-key signing so third parties can verify logs
+- [x] Public-key signing so third parties can verify logs ([#23](https://github.com/Prathmesh010190/Agentboxx/issues/23))
 - [x] Validate against a live model ([#5](https://github.com/Prathmesh010190/Agentboxx/issues/5))
 - [ ] Network egress capture (design in [docs/network-egress.md](docs/network-egress.md))
 - [ ] Semantic drift detector
