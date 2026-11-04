@@ -1,16 +1,16 @@
 <div align="center">
 
 <a href="https://github.com/Prathmesh010190/Agentboxx">
-  <img src="assets/box-logo.svg" alt="AGENTBOXX" width="650">
+  <img src="assets/box-logo.svg" alt="AGENTBOXX" width="600">
 </a>
 
-<br/><br/>
-
-[![CI](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/agentboxx.svg?color=orange)](https://pypi.org/project/agentboxx/)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)
-![Status](https://img.shields.io/badge/status-MVP-green.svg)
+<p align="center">
+  <a href="https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml"><img src="https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://pypi.org/project/agentboxx/"><img src="https://img.shields.io/pypi/v/agentboxx.svg?color=f97316" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/agentboxx/"><img src="https://img.shields.io/badge/python-3.10+-3776AB.svg" alt="Python Versions"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/badge/status-MVP-green.svg" alt="Status">
+</p>
 
 </div>
 
