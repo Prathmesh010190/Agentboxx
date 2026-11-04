@@ -1,8 +1,10 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Agentboxx Logo" width="130" height="130">
+<img src="assets/logo.svg" alt="Agentboxx Logo" width="120" height="120">
 
-# agentbox
+<br/>
+
+<img src="assets/wordmark.svg" alt="AGENTBOXX" width="360">
 
 **A tamper-evident flight recorder for AI agents.**
 
