@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://github.com/Prathmesh010190/Agentboxx">
-  <img src="assets/banner.svg" alt="AGENTBOXX" width="650">
+  <img src="assets/box-logo.svg" alt="AGENTBOXX" width="650">
 </a>
 
 <br/><br/>
