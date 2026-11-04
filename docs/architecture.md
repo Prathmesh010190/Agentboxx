@@ -19,6 +19,17 @@ Legend: **built** exists on `main`, **planned** is a goal, not a feature.
 | Sandbox | No | The agent's commands and workspace |
 | Model provider | Outside our control | Redacted observations |
 
+
+### Dual-signing architecture
+
+Agentbox uses a two-tier cryptographic model for tamper evidence:
+
+1. **Symmetric HMAC-SHA256 (Per-Record Streaming)**:
+   Every record appended during execution is chained and signed with a symmetric secret key (`~/.agentbox/key`). This ensures ultra-fast, zero-overhead stream signing and internal verification.
+2. **Asymmetric Ed25519 (Third-Party Run Receipts)**:
+   When a session closes, `Recorder.close()` issues an Ed25519 run receipt (`<session>.receipt.json`) containing the final hash, record count, session timestamps, and public key ID.
+   External auditors, customers, and regulators holding **only the public key** (`~/.agentbox/ed25519.pub`) can verify that the run was executed and finalized by the keyholder without holding the private signing secret.
+
 ## Components
 
 | # | Component | Built | Planned |
