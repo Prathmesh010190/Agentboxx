@@ -4,7 +4,7 @@
 
 <br/>
 
-<img src="assets/wordmark.svg" alt="AGENTBOXX" width="360">
+<h1><span style="color: #FF6B00; font-weight: 800; letter-spacing: 2px;">AGENTBOXX</span></h1>
 
 **A tamper-evident flight recorder for AI agents.**
 
