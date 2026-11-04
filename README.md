@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Agentboxx Logo" width="120" height="120">
+<a href="https://github.com/Prathmesh010190/Agentboxx">
+  <img src="assets/banner.svg" alt="Agentboxx - Tamper-Evident AI Flight Recorder" width="620">
+</a>
 
 <br/>
 
-<h1><span style="color: #FF6B00; font-weight: 800; letter-spacing: 2px;">AGENTBOXX</span></h1>
+**Run agent commands in an isolated sandbox, record what actually happened, sign every record, and catch agents that get stuck.**
 
-**A tamper-evident flight recorder for AI agents.**
-
-Run agent commands in an isolated sandbox, record what actually happened, sign every record, and catch agents that get stuck.
+<br/>
 
 [![CI](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/agentboxx.svg?color=orange)](https://pypi.org/project/agentboxx/)

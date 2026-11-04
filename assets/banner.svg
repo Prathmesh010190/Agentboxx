@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="100%" height="100%">
+  <defs>
+    <!-- Aviation Orange Gradient -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9500"/>
+      <stop offset="50%" stop-color="#FF5E00"/>
+      <stop offset="100%" stop-color="#E03E00"/>
+    </linearGradient>
+
+    <!-- Top Chassis Highlight -->
+    <linearGradient id="chassisTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFA834"/>
+      <stop offset="100%" stop-color="#FF7A00"/>
+    </linearGradient>
+
+    <!-- Telemetry Cyan Pulse Gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <!-- Drop Glow Filter -->
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#FF5E00" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <style>
+    .title-agent {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+      font-weight: 900;
+      font-size: 50px;
+      letter-spacing: 2px;
+      fill: #0F172A;
+    }
+    .title-boxx {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+      font-weight: 900;
+      font-size: 50px;
+      letter-spacing: 2px;
+      fill: url(#orangeGrad);
+    }
+    .tagline {
+      font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
+      font-weight: 700;
+      font-size: 13.5px;
+      letter-spacing: 3.5px;
+      fill: #64748B;
+    }
+    .accent-bar {
+      stroke: url(#orangeGrad);
+    }
+
+    /* GitHub Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+      .title-agent { fill: #FFFFFF; }
+      .tagline { fill: #94A3B8; }
+    }
+  </style>
+
+  <!-- Left: 3D Flight Recorder Emblem -->
+  <g transform="translate(42, 10)" filter="url(#softGlow)">
+    <!-- Chassis Top Face -->
+    <polygon points="65,18 114,46 65,74 16,46" fill="url(#chassisTop)"/>
+    <!-- Chassis Left Face -->
+    <polygon points="16,46 65,74 65,126 16,98" fill="url(#orangeGrad)"/>
+    <!-- Chassis Right Face -->
+    <polygon points="65,74 114,46 114,98 65,126" fill="#CC3700"/>
+
+    <!-- Inner Cryptographic Vault Shield -->
+    <polygon points="65,52 94,68 94,102 65,118 36,102 36,68" fill="#0B0F19" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- Telemetry Core & Cryptographic Node -->
+    <circle cx="65" cy="85" r="7.5" fill="url(#cyanGrad)"/>
+    <circle cx="65" cy="85" r="14" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="2.5 2.5"/>
+
+    <!-- Tamper Hash Links -->
+    <line x1="65" y1="68" x2="65" y2="78" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="51" y1="93" x2="59" y2="88" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="79" y1="93" x2="71" y2="88" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Right: Dual-Tone Wordmark & Subtitle -->
+  <g transform="translate(195, 30)">
+    <!-- Title: AGENT (Adaptive White/Black) + BOXX (Glowing Orange) -->
+    <text x="0" y="52">
+      <tspan class="title-agent">AGENT</tspan><tspan class="title-boxx">BOXX</tspan>
+    </text>
+
+    <!-- Sleek Accent Line -->
+    <line x1="2" y1="68" x2="480" y2="68" stroke="url(#orangeGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- Subtitle / Mission -->
+    <text x="2" y="93" class="tagline">TAMPER-EVIDENT AI FLIGHT RECORDER</text>
+  </g>
+</svg>
