@@ -1,34 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
-    <!-- Soft Anti-Gravity Levitation Shadow -->
-    <filter id="levitateShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#E05626" flood-opacity="0.28"/>
+    <!-- Radiant Solar / Terracotta Gradient -->
+    <linearGradient id="orbitalGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9500"/>
+      <stop offset="60%" stop-color="#FF5100"/>
+      <stop offset="100%" stop-color="#D92400"/>
+    </linearGradient>
+
+    <linearGradient id="orbitalGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF6A00"/>
+      <stop offset="50%" stop-color="#FF3800"/>
+      <stop offset="100%" stop-color="#B81400"/>
+    </linearGradient>
+
+    <!-- Deep Space Core -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFA24C"/>
+      <stop offset="60%" stop-color="#FF5100"/>
+      <stop offset="100%" stop-color="#FF5100" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Soft Depth Shadow -->
+    <filter id="zenithShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#FF3800" flood-opacity="0.35"/>
     </filter>
   </defs>
 
-  <g transform="translate(2, 0)">
-    <!-- 1. The Lower Vault (Ground Box) -->
-    <!-- Vault Interior (Dark Obsidian) -->
-    <polygon points="50,96 100,68 150,96 100,124" fill="#18181B"/>
+  <g transform="translate(100, 100)" filter="url(#zenithShadow)">
+    <!-- Primary Outer Orbital Wing (Sweeping Antigravity Arc) -->
+    <path d="M 0,-76
+             C 45,-76 76,-42 76,2
+             C 76,46 44,76 -2,76
+             C -24,76 -46,66 -58,50
+             C -46,58 -30,62 -12,62
+             C 24,62 58,34 58,-4
+             C 58,-38 30,-62 -8,-62
+             C -28,-62 -48,-52 -60,-36
+             C -50,-60 -24,-76 0,-76 Z"
+          fill="url(#orbitalGrad1)"/>
 
-    <!-- Vault Left Wall (Anthropic Terracotta) -->
-    <polygon points="50,96 100,124 100,172 50,144" fill="#E05626"/>
+    <!-- Counter Kinetic Wing (Interlocking Containment Vault) -->
+    <path d="M 0,76
+             C -45,76 -76,42 -76,-2
+             C -76,-46 -44,-76 2,-76
+             C 24,-76 46,-66 58,-50
+             C 46,-58 30,-62 12,-62
+             C -24,-62 -58,-34 -58,4
+             C -58,38 -30,62 8,62
+             C 28,62 48,52 60,36
+             C 50,60 24,76 0,76 Z"
+          fill="url(#orbitalGrad2)"/>
 
-    <!-- Vault Right Wall (Deep Rust Shadow) -->
-    <polygon points="100,124 150,96 150,144 100,172" fill="#B33A15"/>
-
-    <!-- Isolated Zero-G Telemetry Core suspended inside -->
-    <circle cx="100" cy="98" r="6" fill="#FFA07A"/>
-    <circle cx="100" cy="98" r="14" fill="none" stroke="#FFA07A" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
-
-    <!-- 2. The Floating Anti-Gravity Lid (Weightless Slab) -->
-    <g filter="url(#levitateShadow)">
-      <!-- Lid Top Face (Vibrant Anthropic Coral) -->
-      <polygon points="100,28 150,56 100,84 50,56" fill="#FF6E38"/>
-      <!-- Lid Left Thickness -->
-      <polygon points="50,56 100,84 100,92 50,64" fill="#E05626"/>
-      <!-- Lid Right Thickness -->
-      <polygon points="100,84 150,56 150,64 100,92" fill="#C44118"/>
-    </g>
+    <!-- Suspended Center Core (Flight Recorder Node) -->
+    <circle cx="0" cy="0" r="14" fill="url(#coreGlow)"/>
+    <circle cx="0" cy="0" r="7" fill="#FFFFFF"/>
   </g>
 </svg>
