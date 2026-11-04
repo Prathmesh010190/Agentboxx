@@ -1,96 +1,165 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 230" width="100%" height="100%">
   <defs>
-    <!-- Aviation Orange Gradient -->
-    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF9500"/>
-      <stop offset="50%" stop-color="#FF5E00"/>
-      <stop offset="100%" stop-color="#E03E00"/>
+    <!-- Card Border Gradient -->
+    <linearGradient id="cardBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A00" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#38BDF8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1"/>
     </linearGradient>
 
-    <!-- Top Chassis Highlight -->
-    <linearGradient id="chassisTop" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FFA834"/>
-      <stop offset="100%" stop-color="#FF7A00"/>
+    <!-- Deep Studio Card Background -->
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F17"/>
+      <stop offset="50%" stop-color="#070A0F"/>
+      <stop offset="100%" stop-color="#05070B"/>
     </linearGradient>
 
-    <!-- Telemetry Cyan Pulse Gradient -->
-    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Aviation Orange Multi-Stop Gradient -->
+    <linearGradient id="orangeGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9E00"/>
+      <stop offset="45%" stop-color="#FF6200"/>
+      <stop offset="100%" stop-color="#FF3700"/>
+    </linearGradient>
+
+    <!-- Titanium Platinum White Gradient -->
+    <linearGradient id="titaniumGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+
+    <!-- Cyan Telemetry Gradient -->
+    <linearGradient id="cyanCore" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38BDF8"/>
       <stop offset="100%" stop-color="#0284C7"/>
     </linearGradient>
 
-    <!-- Drop Glow Filter -->
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#FF5E00" flood-opacity="0.32"/>
+    <!-- Ambient Glow Blooms -->
+    <radialGradient id="orangeBloom" cx="15%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6200" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#FF6200" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#FF6200" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="cyanBloom" cx="70%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle Dot Grid Pattern -->
+    <pattern id="dotGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#FFFFFF" fill-opacity="0.04"/>
+    </pattern>
+
+    <!-- Glow Filter for Core -->
+    <filter id="intenseGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
 
   <style>
-    .title-agent {
+    .brand-agent {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
       font-weight: 900;
-      font-size: 50px;
+      font-size: 58px;
       letter-spacing: 2px;
-      fill: #0F172A;
+      fill: url(#titaniumGrad);
     }
-    .title-boxx {
+    .brand-boxx {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
       font-weight: 900;
-      font-size: 50px;
+      font-size: 58px;
       letter-spacing: 2px;
-      fill: url(#orangeGrad);
+      fill: url(#orangeGlow);
     }
-    .tagline {
+    .badge-text {
       font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
       font-weight: 700;
-      font-size: 13.5px;
-      letter-spacing: 3.5px;
+      font-size: 11.5px;
+      letter-spacing: 2.5px;
+      fill: #FF9E00;
+    }
+    .sub-desc {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 500;
+      font-size: 14.5px;
+      letter-spacing: 0.5px;
+      fill: #94A3B8;
+    }
+    .spec-text {
+      font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+      font-size: 10.5px;
+      letter-spacing: 1.5px;
       fill: #64748B;
-    }
-    .accent-bar {
-      stroke: url(#orangeGrad);
-    }
-
-    /* GitHub Dark Mode Support */
-    @media (prefers-color-scheme: dark) {
-      .title-agent { fill: #FFFFFF; }
-      .tagline { fill: #94A3B8; }
     }
   </style>
 
-  <!-- Left: 3D Flight Recorder Emblem -->
-  <g transform="translate(42, 10)" filter="url(#softGlow)">
-    <!-- Chassis Top Face -->
-    <polygon points="65,18 114,46 65,74 16,46" fill="url(#chassisTop)"/>
-    <!-- Chassis Left Face -->
-    <polygon points="16,46 65,74 65,126 16,98" fill="url(#orangeGrad)"/>
-    <!-- Chassis Right Face -->
-    <polygon points="65,74 114,46 114,98 65,126" fill="#CC3700"/>
+  <!-- 1. Master Glassmorphic Background Card -->
+  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#cardBg)" stroke="url(#cardBorder)" stroke-width="1.5"/>
+  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#dotGrid)"/>
+  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#orangeBloom)"/>
+  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#cyanBloom)"/>
 
-    <!-- Inner Cryptographic Vault Shield -->
-    <polygon points="65,52 94,68 94,102 65,118 36,102 36,68" fill="#0B0F19" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round"/>
+  <!-- 2. Left: High-Precision 3D Flight Recorder -->
+  <g transform="translate(48, 25)" filter="url(#intenseGlow)">
+    <!-- Chassis Outer Isometric Cube -->
+    <!-- Top Face -->
+    <polygon points="80,18 138,50 80,82 22,50" fill="#FFA336"/>
+    <!-- Left Face -->
+    <polygon points="22,50 80,82 80,146 22,114" fill="url(#orangeGlow)"/>
+    <!-- Right Face (Shadow) -->
+    <polygon points="80,82 138,50 138,114 80,146" fill="#C83800"/>
 
-    <!-- Telemetry Core & Cryptographic Node -->
-    <circle cx="65" cy="85" r="7.5" fill="url(#cyanGrad)"/>
-    <circle cx="65" cy="85" r="14" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="2.5 2.5"/>
+    <!-- Specular Chamfer Highlights -->
+    <line x1="22" y1="50" x2="80" y2="82" stroke="#FFD8A8" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="80" y1="82" x2="138" y2="50" stroke="#FF8A00" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="80" y1="82" x2="80" y2="146" stroke="#FFA336" stroke-width="1.5" stroke-linecap="round"/>
 
-    <!-- Tamper Hash Links -->
-    <line x1="65" y1="68" x2="65" y2="78" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="51" y1="93" x2="59" y2="88" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="79" y1="93" x2="71" y2="88" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
+    <!-- Inner Cryptographic Vault Chamber -->
+    <polygon points="80,56 114,75 114,115 80,134 46,115 46,75" fill="#06090E" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- Gyro Telemetry Ring -->
+    <circle cx="80" cy="95" r="18" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8"/>
+    <circle cx="80" cy="95" r="9" fill="url(#cyanCore)"/>
+
+    <!-- Cryptographic Hash Nodes -->
+    <line x1="80" y1="75" x2="80" y2="86" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+    <line x1="64" y1="104" x2="73" y2="99" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+    <line x1="96" y1="104" x2="87" y2="99" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="80" cy="75" r="3" fill="#38BDF8"/>
+    <circle cx="64" cy="104" r="3" fill="#38BDF8"/>
+    <circle cx="96" cy="104" r="3" fill="#38BDF8"/>
   </g>
 
-  <!-- Right: Dual-Tone Wordmark & Subtitle -->
-  <g transform="translate(195, 30)">
-    <!-- Title: AGENT (Adaptive White/Black) + BOXX (Glowing Orange) -->
-    <text x="0" y="52">
-      <tspan class="title-agent">AGENT</tspan><tspan class="title-boxx">BOXX</tspan>
+  <!-- 3. Right: Typography & Identity Lockup -->
+  <g transform="translate(225, 42)">
+    <!-- Pill Status Beacon -->
+    <g transform="translate(0, 0)">
+      <rect x="0" y="0" width="280" height="24" rx="12" fill="#FF5E00" fill-opacity="0.12" stroke="#FF5E00" stroke-opacity="0.4" stroke-width="1"/>
+      <circle cx="12" cy="12" r="4" fill="#FF9E00"/>
+      <text x="24" y="16" class="badge-text">AI FLIGHT RECORDER</text>
+      <text x="180" y="16" class="spec-text">• SANDBOX</text>
+    </g>
+
+    <!-- Main Title: AGENT (Titanium White) + BOXX (Electric Orange) -->
+    <text x="0" y="82">
+      <tspan class="brand-agent">AGENT</tspan><tspan class="brand-boxx">BOXX</tspan>
     </text>
 
-    <!-- Sleek Accent Line -->
-    <line x1="2" y1="68" x2="480" y2="68" stroke="url(#orangeGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <!-- Subtitle -->
+    <text x="2" y="116" class="sub-desc">Tamper-Evident Hash Chaining • Ed25519 Public Receipts • Loop Detection</text>
 
-    <!-- Subtitle / Mission -->
-    <text x="2" y="93" class="tagline">TAMPER-EVIDENT AI FLIGHT RECORDER</text>
+    <!-- Spec Badges Row -->
+    <g transform="translate(2, 134)">
+      <text x="0" y="12" class="spec-text">HOST-ISOLATED</text>
+      <circle cx="112" cy="9" r="2" fill="#64748B"/>
+      <text x="122" y="12" class="spec-text">DOCKER CONTAINERIZED</text>
+      <circle cx="288" cy="9" r="2" fill="#64748B"/>
+      <text x="298" y="12" class="spec-text">ZERO SANDBOX ACCESS</text>
+    </g>
   </g>
 </svg>
