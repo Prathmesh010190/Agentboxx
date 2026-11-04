@@ -1,165 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 230" width="100%" height="100%">
-  <defs>
-    <!-- Card Border Gradient -->
-    <linearGradient id="cardBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF7A00" stop-opacity="0.6"/>
-      <stop offset="40%" stop-color="#38BDF8" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1"/>
-    </linearGradient>
-
-    <!-- Deep Studio Card Background -->
-    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0B0F17"/>
-      <stop offset="50%" stop-color="#070A0F"/>
-      <stop offset="100%" stop-color="#05070B"/>
-    </linearGradient>
-
-    <!-- Aviation Orange Multi-Stop Gradient -->
-    <linearGradient id="orangeGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FF9E00"/>
-      <stop offset="45%" stop-color="#FF6200"/>
-      <stop offset="100%" stop-color="#FF3700"/>
-    </linearGradient>
-
-    <!-- Titanium Platinum White Gradient -->
-    <linearGradient id="titaniumGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="60%" stop-color="#F1F5F9"/>
-      <stop offset="100%" stop-color="#94A3B8"/>
-    </linearGradient>
-
-    <!-- Cyan Telemetry Gradient -->
-    <linearGradient id="cyanCore" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8"/>
-      <stop offset="100%" stop-color="#0284C7"/>
-    </linearGradient>
-
-    <!-- Ambient Glow Blooms -->
-    <radialGradient id="orangeBloom" cx="15%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FF6200" stop-opacity="0.18"/>
-      <stop offset="60%" stop-color="#FF6200" stop-opacity="0.04"/>
-      <stop offset="100%" stop-color="#FF6200" stop-opacity="0"/>
-    </radialGradient>
-
-    <radialGradient id="cyanBloom" cx="70%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.10"/>
-      <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- Subtle Dot Grid Pattern -->
-    <pattern id="dotGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-      <circle cx="2" cy="2" r="1" fill="#FFFFFF" fill-opacity="0.04"/>
-    </pattern>
-
-    <!-- Glow Filter for Core -->
-    <filter id="intenseGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="100%" height="100%">
   <style>
-    .brand-agent {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
-      font-weight: 900;
-      font-size: 58px;
-      letter-spacing: 2px;
-      fill: url(#titaniumGrad);
+    .mark-primary { fill: #E05626; }
+    .mark-shadow  { fill: #C84417; }
+    
+    .brand-title {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
+      font-weight: 800;
+      font-size: 42px;
+      letter-spacing: 7px;
+      fill: #18181B;
     }
-    .brand-boxx {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
-      font-weight: 900;
-      font-size: 58px;
-      letter-spacing: 2px;
-      fill: url(#orangeGlow);
-    }
-    .badge-text {
-      font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
-      font-weight: 700;
-      font-size: 11.5px;
-      letter-spacing: 2.5px;
-      fill: #FF9E00;
-    }
-    .sub-desc {
+
+    .brand-sub {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-weight: 500;
-      font-size: 14.5px;
-      letter-spacing: 0.5px;
-      fill: #94A3B8;
+      font-size: 15px;
+      letter-spacing: 1px;
+      fill: #71717A;
     }
-    .spec-text {
-      font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
-      font-size: 10.5px;
-      letter-spacing: 1.5px;
-      fill: #64748B;
+
+    /* GitHub Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+      .brand-title { fill: #F4F4F5; }
+      .brand-sub   { fill: #A1A1AA; }
     }
   </style>
 
-  <!-- 1. Master Glassmorphic Background Card -->
-  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#cardBg)" stroke="url(#cardBorder)" stroke-width="1.5"/>
-  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#dotGrid)"/>
-  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#orangeBloom)"/>
-  <rect x="2" y="2" width="856" height="226" rx="20" fill="url(#cyanBloom)"/>
-
-  <!-- 2. Left: High-Precision 3D Flight Recorder -->
-  <g transform="translate(48, 25)" filter="url(#intenseGlow)">
-    <!-- Chassis Outer Isometric Cube -->
-    <!-- Top Face -->
-    <polygon points="80,18 138,50 80,82 22,50" fill="#FFA336"/>
-    <!-- Left Face -->
-    <polygon points="22,50 80,82 80,146 22,114" fill="url(#orangeGlow)"/>
-    <!-- Right Face (Shadow) -->
-    <polygon points="80,82 138,50 138,114 80,146" fill="#C83800"/>
-
-    <!-- Specular Chamfer Highlights -->
-    <line x1="22" y1="50" x2="80" y2="82" stroke="#FFD8A8" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="80" y1="82" x2="138" y2="50" stroke="#FF8A00" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="80" y1="82" x2="80" y2="146" stroke="#FFA336" stroke-width="1.5" stroke-linecap="round"/>
-
-    <!-- Inner Cryptographic Vault Chamber -->
-    <polygon points="80,56 114,75 114,115 80,134 46,115 46,75" fill="#06090E" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round"/>
-
-    <!-- Gyro Telemetry Ring -->
-    <circle cx="80" cy="95" r="18" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8"/>
-    <circle cx="80" cy="95" r="9" fill="url(#cyanCore)"/>
-
-    <!-- Cryptographic Hash Nodes -->
-    <line x1="80" y1="75" x2="80" y2="86" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
-    <line x1="64" y1="104" x2="73" y2="99" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
-    <line x1="96" y1="104" x2="87" y2="99" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="80" cy="75" r="3" fill="#38BDF8"/>
-    <circle cx="64" cy="104" r="3" fill="#38BDF8"/>
-    <circle cx="96" cy="104" r="3" fill="#38BDF8"/>
-  </g>
-
-  <!-- 3. Right: Typography & Identity Lockup -->
-  <g transform="translate(225, 42)">
-    <!-- Pill Status Beacon -->
-    <g transform="translate(0, 0)">
-      <rect x="0" y="0" width="280" height="24" rx="12" fill="#FF5E00" fill-opacity="0.12" stroke="#FF5E00" stroke-opacity="0.4" stroke-width="1"/>
-      <circle cx="12" cy="12" r="4" fill="#FF9E00"/>
-      <text x="24" y="16" class="badge-text">AI FLIGHT RECORDER</text>
-      <text x="180" y="16" class="spec-text">• SANDBOX</text>
+  <!-- Centered Layout -->
+  <g transform="translate(400, 10)" text-anchor="middle">
+    <!-- Anthropic-style Geometric Monogram (A + Box) -->
+    <g transform="translate(-40, 0) scale(0.52)">
+      <!-- Left Architectural Slab -->
+      <polygon points="26,134 58,134 88,30 56,30" class="mark-primary"/>
+      <!-- Right Intersecting Vault Slab -->
+      <polygon points="68,76 134,76 112,134 82,134" class="mark-primary"/>
+      <!-- Top Cross-Plane -->
+      <polygon points="76,30 114,30 134,76 96,76" class="mark-shadow"/>
     </g>
 
-    <!-- Main Title: AGENT (Titanium White) + BOXX (Electric Orange) -->
-    <text x="0" y="82">
-      <tspan class="brand-agent">AGENT</tspan><tspan class="brand-boxx">BOXX</tspan>
-    </text>
+    <!-- Editorial Typography: AGENTBOXX -->
+    <text x="0" y="132" class="brand-title">AGENTBOXX</text>
 
     <!-- Subtitle -->
-    <text x="2" y="116" class="sub-desc">Tamper-Evident Hash Chaining • Ed25519 Public Receipts • Loop Detection</text>
-
-    <!-- Spec Badges Row -->
-    <g transform="translate(2, 134)">
-      <text x="0" y="12" class="spec-text">HOST-ISOLATED</text>
-      <circle cx="112" cy="9" r="2" fill="#64748B"/>
-      <text x="122" y="12" class="spec-text">DOCKER CONTAINERIZED</text>
-      <circle cx="288" cy="9" r="2" fill="#64748B"/>
-      <text x="298" y="12" class="spec-text">ZERO SANDBOX ACCESS</text>
-    </g>
+    <text x="0" y="172" class="brand-sub">A tamper-evident flight recorder for AI agents</text>
   </g>
 </svg>

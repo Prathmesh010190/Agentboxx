@@ -1,14 +1,10 @@
 <div align="center">
 
 <a href="https://github.com/Prathmesh010190/Agentboxx">
-  <img src="assets/banner.svg" alt="Agentboxx - Tamper-Evident AI Flight Recorder" width="620">
+  <img src="assets/banner.svg" alt="AGENTBOXX" width="620">
 </a>
 
-<br/>
-
-**Run agent commands in an isolated sandbox, record what actually happened, sign every record, and catch agents that get stuck.**
-
-<br/>
+<br/><br/>
 
 [![CI](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmesh010190/Agentboxx/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/agentboxx.svg?color=orange)](https://pypi.org/project/agentboxx/)
