@@ -1,58 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
-    <!-- Radiant Solar / Terracotta Gradient -->
-    <linearGradient id="orbitalGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF9500"/>
-      <stop offset="60%" stop-color="#FF5100"/>
-      <stop offset="100%" stop-color="#D92400"/>
+    <!-- Facet Gradients for Realistic 3D Depth -->
+    <linearGradient id="topFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFBD59"/>
+      <stop offset="100%" stop-color="#FF9500"/>
     </linearGradient>
 
-    <linearGradient id="orbitalGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#FF6A00"/>
-      <stop offset="50%" stop-color="#FF3800"/>
-      <stop offset="100%" stop-color="#B81400"/>
+    <linearGradient id="leftFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7300"/>
+      <stop offset="100%" stop-color="#FF4500"/>
     </linearGradient>
 
-    <!-- Deep Space Core -->
-    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFA24C"/>
-      <stop offset="60%" stop-color="#FF5100"/>
-      <stop offset="100%" stop-color="#FF5100" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="rightFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D63800"/>
+      <stop offset="100%" stop-color="#A82500"/>
+    </linearGradient>
 
-    <!-- Soft Depth Shadow -->
-    <filter id="zenithShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#FF3800" flood-opacity="0.35"/>
+    <filter id="cubeDrop" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#FF4500" flood-opacity="0.30"/>
     </filter>
   </defs>
 
-  <g transform="translate(100, 100)" filter="url(#zenithShadow)">
-    <!-- Primary Outer Orbital Wing (Sweeping Antigravity Arc) -->
-    <path d="M 0,-76
-             C 45,-76 76,-42 76,2
-             C 76,46 44,76 -2,76
-             C -24,76 -46,66 -58,50
-             C -46,58 -30,62 -12,62
-             C 24,62 58,34 58,-4
-             C 58,-38 30,-62 -8,-62
-             C -28,-62 -48,-52 -60,-36
-             C -50,-60 -24,-76 0,-76 Z"
-          fill="url(#orbitalGrad1)"/>
+  <g transform="translate(100, 100)" filter="url(#cubeDrop)">
+    <!-- 1. Left Pillar (Isometric Left Slab) -->
+    <polygon points="-75,-25 -15,10 -15,80 -75,45" fill="url(#leftFace)"/>
 
-    <!-- Counter Kinetic Wing (Interlocking Containment Vault) -->
-    <path d="M 0,76
-             C -45,76 -76,42 -76,-2
-             C -76,-46 -44,-76 2,-76
-             C 24,-76 46,-66 58,-50
-             C 46,-58 30,-62 12,-62
-             C -24,-62 -58,-34 -58,4
-             C -58,38 -30,62 8,62
-             C 28,62 48,52 60,36
-             C 50,60 24,76 0,76 Z"
-          fill="url(#orbitalGrad2)"/>
+    <!-- 2. Right Pillar (Isometric Right Slab) -->
+    <polygon points="-15,10 45,-25 45,45 -15,80" fill="url(#rightFace)"/>
 
-    <!-- Suspended Center Core (Flight Recorder Node) -->
-    <circle cx="0" cy="0" r="14" fill="url(#coreGlow)"/>
-    <circle cx="0" cy="0" r="7" fill="#FFFFFF"/>
+    <!-- 3. Top Roof Diamond (Isometric Top Deck) -->
+    <polygon points="-15,-60 45,-25 -15,10 -75,-25" fill="url(#topFace)"/>
+
+    <!-- 4. The Architectural Crossbar (Locking the 'A' and Vault) -->
+    <!-- Crossbar Top -->
+    <polygon points="-45,28 -15,45 15,28 -15,10" fill="#FFA533"/>
+    <!-- Crossbar Front Left -->
+    <polygon points="-45,28 -15,45 -15,58 -45,40" fill="#FF5E00"/>
+    <!-- Crossbar Front Right -->
+    <polygon points="-15,45 15,28 15,40 -15,58" fill="#B82E00"/>
+
+    <!-- 5. Inner Negative Vault Chamber (Dark Host Core) -->
+    <polygon points="-15,10 -15,45 -36,33" fill="#0D1117" opacity="0.85"/>
+    <polygon points="-15,10 6,33 -15,45" fill="#05080C" opacity="0.95"/>
+    <polygon points="-15,58 -15,80 -45,62" fill="#0D1117" opacity="0.6"/>
+    <polygon points="-15,58 15,62 -15,80" fill="#05080C" opacity="0.7"/>
+
+    <!-- Center Precision Telemetry Dot -->
+    <circle cx="-15" cy="28" r="3.5" fill="#FFFFFF"/>
   </g>
 </svg>

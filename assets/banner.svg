@@ -1,60 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 270" width="100%" height="100%">
   <defs>
-    <linearGradient id="bGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF9500"/>
-      <stop offset="60%" stop-color="#FF5100"/>
-      <stop offset="100%" stop-color="#D92400"/>
+    <linearGradient id="bTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFBD59"/>
+      <stop offset="100%" stop-color="#FF9500"/>
     </linearGradient>
 
-    <linearGradient id="bGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#FF6A00"/>
-      <stop offset="50%" stop-color="#FF3800"/>
-      <stop offset="100%" stop-color="#B81400"/>
+    <linearGradient id="bLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7300"/>
+      <stop offset="100%" stop-color="#FF4500"/>
     </linearGradient>
 
-    <filter id="bShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#FF3800" flood-opacity="0.32"/>
+    <linearGradient id="bRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D63800"/>
+      <stop offset="100%" stop-color="#A82500"/>
+    </linearGradient>
+
+    <filter id="bCubeShadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#FF4500" flood-opacity="0.35"/>
     </filter>
   </defs>
 
   <style>
-    .brand-main {
+    .brand-title {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
-      font-weight: 800;
-      font-size: 40px;
-      letter-spacing: 7px;
+      font-weight: 900;
+      font-size: 44px;
+      letter-spacing: 10px;
       fill: #18181B;
     }
-    .brand-accent {
-      fill: url(#bGrad1);
-    }
-    .sub-brand {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-weight: 500;
-      font-size: 14.5px;
-      letter-spacing: 2px;
-      fill: #71717A;
+    .brand-sub {
+      font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 3px;
+      fill: #FF6600;
     }
 
     @media (prefers-color-scheme: dark) {
-      .brand-main { fill: #FAFAFA; }
-      .sub-brand  { fill: #A1A1AA; }
+      .brand-title { fill: #FFFFFF; }
     }
   </style>
 
-  <g transform="translate(400, 15)" text-anchor="middle">
-    <!-- Orbital Emblem -->
-    <g transform="translate(0, 52) scale(0.55)" filter="url(#bShadow)">
-      <path d="M 0,-76 C 45,-76 76,-42 76,2 C 76,46 44,76 -2,76 C -24,76 -46,66 -58,50 C -46,58 -30,62 -12,62 C 24,62 58,34 58,-4 C 58,-38 30,-62 -8,-62 C -28,-62 -48,-52 -60,-36 C -50,-60 -24,-76 0,-76 Z" fill="url(#bGrad1)"/>
-      <path d="M 0,76 C -45,76 -76,42 -76,-2 C -76,-46 -44,-76 2,-76 C 24,-76 46,-66 58,-50 C 46,-58 30,-62 12,-62 C -24,-62 -58,-34 -58,4 C -58,38 -30,62 8,62 C 28,62 48,52 60,36 C 50,60 24,76 0,76 Z" fill="url(#bGrad2)"/>
-      <circle cx="0" cy="0" r="13" fill="#FF8A33"/>
-      <circle cx="0" cy="0" r="6.5" fill="#FFFFFF"/>
+  <g transform="translate(400, 20)" text-anchor="middle">
+    <!-- 3D Boxy A-Cube (Scaled for Hero Banner) -->
+    <g transform="translate(10, 52) scale(0.68)" filter="url(#bCubeShadow)">
+      <!-- Left Slab -->
+      <polygon points="-75,-25 -15,10 -15,80 -75,45" fill="url(#bLeft)"/>
+      <!-- Right Slab -->
+      <polygon points="-15,10 45,-25 45,45 -15,80" fill="url(#bRight)"/>
+      <!-- Top Roof -->
+      <polygon points="-15,-60 45,-25 -15,10 -75,-25" fill="url(#bTop)"/>
+      <!-- Crossbar -->
+      <polygon points="-45,28 -15,45 15,28 -15,10" fill="#FFA533"/>
+      <polygon points="-45,28 -15,45 -15,58 -45,40" fill="#FF5E00"/>
+      <polygon points="-15,45 15,28 15,40 -15,58" fill="#B82E00"/>
+      <!-- Vault Aperture -->
+      <polygon points="-15,10 -15,45 -36,33" fill="#0D1117" opacity="0.85"/>
+      <polygon points="-15,10 6,33 -15,45" fill="#05080C" opacity="0.95"/>
+      <polygon points="-15,58 -15,80 -45,62" fill="#0D1117" opacity="0.6"/>
+      <polygon points="-15,58 15,62 -15,80" fill="#05080C" opacity="0.7"/>
+      <!-- Telemetry Point -->
+      <circle cx="-15" cy="28" r="3.5" fill="#FFFFFF"/>
     </g>
 
-    <!-- Typography: AGENTBOXX -->
-    <text x="0" y="152" class="brand-main">AGENT<tspan class="brand-accent">BOXX</tspan></text>
+    <!-- Unified High-Authority Typography (Clean Pure White / Titanium) -->
+    <text x="5" y="180" class="brand-title">AGENTBOXX</text>
 
-    <!-- Subtitle -->
-    <text x="0" y="188" class="sub-brand">A TAMPER-EVIDENT FLIGHT RECORDER FOR AI AGENTS</text>
+    <!-- Subtitle in Aviation Orange Monospace -->
+    <text x="5" y="215" class="brand-sub">TAMPER-EVIDENT AI FLIGHT RECORDER</text>
   </g>
 </svg>
