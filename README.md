@@ -19,7 +19,7 @@
 
 ---
 
-## Why agentbox
+## Why agentboxx
 
 Most agent tooling records what the agent *says* it did, from inside the agent's own process. agentbox observes from the outside.
 
