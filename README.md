@@ -137,6 +137,32 @@ rec.close("done")                        # also stops the container
 
 `agentbox.agent.run_agent` wraps this in a ReAct-style loop. `ScriptedModel` needs no API key. `GeminiModel` connects to Google Gemini via standard-library REST (needs `GEMINI_API_KEY`, validated end-to-end). `AnthropicModel` is an optional adapter (`pip install anthropic`, set `ANTHROPIC_API_KEY`).
 
+### LangChain & LangGraph integration
+
+Agentboxx records LangChain tool executions into its cryptographic flight recorder:
+
+~~~bash
+pip install "agentboxx[langchain]"
+~~~
+
+Use `AgentboxxCallbackHandler` directly with tools, agents, or chains:
+
+~~~python
+from agentbox.integrations.langchain import AgentboxxCallbackHandler
+from langchain_core.tools import tool
+
+@tool
+def calculate(expression: str) -> str:
+    """Evaluate a math expression."""
+    return str(eval(expression))
+
+handler = AgentboxxCallbackHandler("session-langchain")
+calculate.invoke({"expression": "10 * 4.2"}, config={"callbacks": [handler]})
+handler.close("finished")
+~~~
+
+Run `agentbox verify runs/session-langchain.ndjson` to verify the log's cryptographic integrity.
+
 ## What `agentbox verify` reports
 
 | Result | Exit code | Meaning |

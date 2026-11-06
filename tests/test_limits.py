@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 import pytest
@@ -10,16 +11,18 @@ from agentbox.streaming import Capture
 posix_only = pytest.mark.skipif(os.name != "posix" or not os.path.isdir("/proc"),
                                 reason="needs POSIX process groups and /proc")
 
+_PY = sys.executable.replace("\\", "/")
+
 
 def test_small_output_is_complete(tmp_path):
-    r = run_command("python3 -c \"print('a' * 100)\"", str(tmp_path))
+    r = run_command(f'"{_PY}" -c "print(\'a\' * 100)"', str(tmp_path))
     assert r["stdout"]["truncated"] is False
     assert "a" * 100 in r["stdout"]["text"]
     assert r["output_limit_exceeded"] is False
 
 
 def test_large_output_keeps_head_and_tail(tmp_path):
-    cmd = "python3 -c \"print('HEAD'); print('x' * 20000); print('TAIL')\""
+    cmd = f'"{_PY}" -c "print(\'HEAD\'); print(\'x\' * 20000); print(\'TAIL\')"'
     r = run_command(cmd, str(tmp_path))
     s = r["stdout"]
     assert s["truncated"] is True and s["total_bytes"] > 20000
