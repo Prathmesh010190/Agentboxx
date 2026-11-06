@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .executor import _find_bash
+
 
 @dataclass
 class AssertionResult:
@@ -85,8 +87,7 @@ class Assertion:
         if self.kind == "command":
             try:
                 proc = subprocess.run(
-                    self.target,
-                    shell=True,
+                    [_find_bash(), "--noprofile", "--norc", "-c", self.target],
                     cwd=str(ws),
                     capture_output=True,
                     text=True,

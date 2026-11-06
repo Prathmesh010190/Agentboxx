@@ -1,6 +1,7 @@
 """Unit tests for TaskContract and host-side success assertions."""
 import hashlib
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from agentbox.signer import load_or_create_key, verify_log
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "docs" / "schema.json").read_text(encoding="utf-8"))
+_PY = sys.executable.replace("\\", "/")
 
 
 def test_file_exists_assertion(tmp_path):
@@ -76,17 +78,17 @@ def test_command_assertion(tmp_path):
     ws.mkdir()
 
     # Successful command
-    a_pass = assert_command("python3 -c 'print(\"check passed\")'")
+    a_pass = assert_command(f'"{_PY}" -c \'print("check passed")\'')
     assert a_pass.check(ws).passed is True
 
     # Failing command (non-zero exit code)
-    a_fail = assert_command("python3 -c 'import sys; sys.exit(42)'")
+    a_fail = assert_command(f'"{_PY}" -c \'import sys; sys.exit(42)\'')
     res_fail = a_fail.check(ws)
     assert res_fail.passed is False
     assert "Exit code 42 != 0" in res_fail.details
 
     # Timeout
-    a_timeout = Assertion(kind="command", target="python3 -c 'import time; time.sleep(1)'", timeout_s=0.05)
+    a_timeout = Assertion(kind="command", target=f'"{_PY}" -c \'import time; time.sleep(1)\'', timeout_s=0.05)
     res_to = a_timeout.check(ws)
     assert res_to.passed is False
     assert "timed out" in res_to.details
@@ -205,7 +207,7 @@ def test_contract_success_and_cryptographic_verification(tmp_path):
     rec = Recorder("success-contract", workspace=str(ws), log_dir=str(tmp_path / "runs"),
                    key_path=tmp_path / "key", contract=contract)
     # Step creates the required file
-    rec.run("python3 -c 'open(\"solution.txt\", \"w\").write(\"ANSWER=42\\n\")'")
+    rec.run(f'"{_PY}" -c \'open("solution.txt", "w").write("ANSWER=42\\n")\'')
     rec.close("done")
 
     key = load_or_create_key(tmp_path / "key")
@@ -232,7 +234,7 @@ def test_contract_surfaced_in_reports(tmp_path):
     )
     rec = Recorder("report-contract", workspace=str(ws), log_dir=str(tmp_path / "runs"),
                    key_path=tmp_path / "key", contract=contract)
-    rec.run("python3 -c 'open(\"created.txt\", \"w\").write(\"ok\")'")
+    rec.run(f'"{_PY}" -c \'open("created.txt", "w").write("ok")\'')
     rec.close("done")
 
     events = [json.loads(line)["event"] for line in rec.log_path.read_text(encoding="utf-8").splitlines()]
