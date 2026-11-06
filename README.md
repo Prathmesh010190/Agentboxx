@@ -163,6 +163,37 @@ handler.close("finished")
 
 Run `agentbox verify runs/session-langchain.ndjson` to verify the log's cryptographic integrity.
 
+### Task contracts & host-side assertions
+
+Instead of trusting an agent's self-reported claim that a task succeeded, attach a `TaskContract` to enforce execution boundaries (maximum steps, cumulative duration, deadline) and execute objective host-side success assertions:
+
+~~~python
+from agentbox import (
+    Recorder,
+    TaskContract,
+    assert_file_exists,
+    assert_file_contains,
+    assert_command,
+)
+
+contract = TaskContract(
+    task_id="solve-issue-42",
+    max_steps=15,
+    deadline_s=120.0,
+    assertions=[
+        assert_file_exists("dist/bundle.js"),
+        assert_file_contains("package.json", r'"version":\s*"1\.0\.0"'),
+        assert_command("pytest tests/test_solution.py"),
+    ],
+)
+
+rec = Recorder("eval-session", workspace="./workspace", contract=contract)
+# Run agent actions...
+rec.close("finished")
+~~~
+
+The evaluation verdict (`contract.verdict`) is HMAC-signed and hash-chained into the flight log, and surfaced in `agentbox report` (text, JSON, and HTML).
+
 ## What `agentbox verify` reports
 
 | Result | Exit code | Meaning |
