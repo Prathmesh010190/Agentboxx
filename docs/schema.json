@@ -211,6 +211,25 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "contract.verdict"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/contract_verdict"
+              }
+            }
+          }
         }
       ]
     },
@@ -237,6 +256,10 @@
               "type": "string"
             }
           }
+        },
+        "contract": {
+          "type": "object",
+          "description": "Optional TaskContract defining execution boundaries and assertions"
         }
       }
     },
@@ -466,6 +489,65 @@
         "steps": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "contract_verdict": {
+      "type": "object",
+      "required": [
+        "passed",
+        "summary",
+        "assertions"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean",
+          "description": "True if all assertions passed and no budget was exceeded"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind",
+              "passed"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "details": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "budget_exceeded": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "limit": {
+              "type": "string"
+            },
+            "budget": {
+              "type": "number"
+            },
+            "actual": {
+              "type": "number"
+            }
+          }
         }
       }
     }

@@ -6,6 +6,8 @@ from .executor import error_signature, fingerprint, run_command
 from .loop_detector import LoopConfig, LoopDetector
 from .redact import merge_counts, redact, redact_all
 from .signer import ChainWriter, load_or_create_key, load_ed25519_private_key
+import time
+from .contract import ContractVerdict, TaskContract
 from .workspace import workspace_hash
 
 
@@ -34,7 +36,7 @@ class Recorder:
                  log_dir: str = "./runs", key_path=None,
                  loop_cfg: LoopConfig | None = None, sandbox=None,
                  overwrite: bool = False, agent_id: str | None = None,
-                 ed25519_key_path=None):
+                 ed25519_key_path=None, contract: TaskContract | dict | None = None):
         self.session_id, self.workspace, self.sandbox = session_id, workspace, sandbox
         self.agent_id = agent_id
         self.log_path = Path(log_dir) / f"{session_id}.ndjson"
@@ -48,10 +50,21 @@ class Recorder:
         self.detector = LoopDetector(loop_cfg)
         self.step_index = 0
         self.closed = False
+        if isinstance(contract, dict):
+            self.contract: TaskContract | None = TaskContract.from_dict(contract)
+        elif isinstance(contract, TaskContract):
+            self.contract = contract
+        else:
+            self.contract = None
+        self.contract_verdict: ContractVerdict | None = None
+        self.start_wall_clock = time.monotonic()
+        self.cumulative_duration_ms = 0
         isolation = sandbox.describe() if sandbox else {"backend": "local"}
         start = {"session_id": session_id, "isolation": isolation}
         if agent_id:
             start["agent_id"] = agent_id
+        if self.contract:
+            start["contract"] = self.contract.to_dict()
         self.writer.append("session.start", start)
 
     def record_step(
@@ -114,9 +127,20 @@ class Recorder:
 
         self.writer.append("step", step)
 
+        self.cumulative_duration_ms += duration_ms
         signals = self.detector.observe(step)
         for s in signals:
             self.writer.append("analysis.signal", {"step_index": self.step_index, **s})
+
+        if self.contract and not self.closed:
+            step_viol = self.contract.check_step_budget(self.step_index)
+            if step_viol:
+                self.close(reason="contract_budget_exceeded:max_steps")
+            else:
+                wall_s = time.monotonic() - self.start_wall_clock
+                dead_viol = self.contract.check_deadline_budget(wall_s)
+                if dead_viol:
+                    self.close(reason="contract_budget_exceeded:deadline_s")
 
         return {"observation": obs, "signals": signals}
 
@@ -149,15 +173,37 @@ class Recorder:
             if kind:
                 self.writer.append("sandbox.crash", {"step_index": self.step_index, "kind": kind,
                                                      "exit_code": obs.get("exit_code"), **sbx})
+        self.cumulative_duration_ms += obs.get("duration_ms", 0)
         signals = self.detector.observe(step)
         for s in signals:
             self.writer.append("analysis.signal", {"step_index": self.step_index, **s})
+
+        if self.contract and not self.closed:
+            step_viol = self.contract.check_step_budget(self.step_index)
+            if step_viol:
+                self.close(reason="contract_budget_exceeded:max_steps")
+            else:
+                wall_s = time.monotonic() - self.start_wall_clock
+                dead_viol = self.contract.check_deadline_budget(wall_s)
+                if dead_viol:
+                    self.close(reason="contract_budget_exceeded:deadline_s")
+
         return {"observation": obs, "signals": signals, "sandbox": sbx}
 
     def close(self, reason: str = "done"):
         if self.closed:
             return
         self.closed = True
+        if self.contract:
+            elapsed_wall_s = time.monotonic() - self.start_wall_clock
+            cum_dur_s = self.cumulative_duration_ms / 1000.0
+            self.contract_verdict = self.contract.evaluate(
+                workspace=self.workspace,
+                steps=self.step_index,
+                cumulative_duration_s=cum_dur_s,
+                elapsed_wall_clock_s=elapsed_wall_s,
+            )
+            self.writer.append("contract.verdict", self.contract_verdict.to_dict())
         self.writer.append("session.end", {"reason": reason, "steps": self.step_index})
         self.writer.write_manifest()
         if self.ed25519_key:

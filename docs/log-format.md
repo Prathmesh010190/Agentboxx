@@ -42,11 +42,12 @@ The first record has `prev_hash = GENESIS`. Every later record has `prev_hash` e
 
 | `event_type` | When | Main `data` fields |
 |---|---|---|
-| `session.start` | Once, first | `session_id`, `isolation` (`backend`, plus image, network and limits for Docker), optional `agent_id` |
+| `session.start` | Once, first | `session_id`, `isolation` (`backend`, plus image, network and limits for Docker), optional `agent_id`, optional `contract` |
 | `step` | After each command | `step_index`, `thought`, `command`, `exit_code`, `timed_out`, `output_limit_exceeded`, `stdout`, `stderr`, `error_signature`, `error_class`, `workspace_hash`, `duration_ms`, `redactions`, optional `agent_id`, `tool`, `parent_step_index`, `usage` |
 | `analysis.signal` | A detector fired | `step_index`, `kind`, `severity`, `count`, `hint` |
 | `sandbox.resource` | Docker backend, after each step | `step_index`, `mem_bytes`, `mem_limit_bytes`, `mem_pct`, `cpu_pct`, `pids` |
 | `sandbox.crash` | OOM kill or stopped container | `step_index`, `kind`, `exit_code`, `running`, `oom_killed`, `oom_events` |
+| `contract.verdict` | Before close, if contract configured | `passed`, `summary`, `assertions` (`name`, `kind`, `passed`, `details`), optional `budget_exceeded` |
 | `session.end` | Once, last, when closed | `reason`, `steps` |
 
 Commands, output and `thought` are redacted before they are hashed. `redactions` counts how many secrets were removed per pattern, never the values. `usage` holds token counts supplied by the caller; agentbox never computes them. A stream (`stdout`, `stderr`) holds `text` (the head and tail of the output), `total_bytes`, `truncated` and a `sha256` of the stored text.
