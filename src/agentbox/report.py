@@ -29,6 +29,7 @@ def build_report_data(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     resources: List[Dict[str, Any]] = []
     crashes: List[Dict[str, Any]] = []
     total_redactions = 0
+    contract_info: Any = None
 
     for ev in events:
         etype = ev.get("event_type")
@@ -40,6 +41,8 @@ def build_report_data(events: List[Dict[str, Any]]) -> Dict[str, Any]:
             session_info["isolation"] = data.get("isolation", {})
             session_info["agent_id"] = data.get("agent_id")
             session_info["started_at"] = ts
+            if "contract" in data:
+                contract_info = {"contract": data["contract"], "verdict": None}
         elif etype == "session.end":
             session_info["ended_at"] = ts
             session_info["reason"] = data.get("reason")
@@ -54,6 +57,10 @@ def build_report_data(events: List[Dict[str, Any]]) -> Dict[str, Any]:
             resources.append(data)
         elif etype == "sandbox.crash":
             crashes.append(data)
+        elif etype == "contract.verdict":
+            if contract_info is None:
+                contract_info = {"contract": None, "verdict": None}
+            contract_info["verdict"] = data
 
     if session_info["started_at"] is not None and session_info["ended_at"] is not None:
         session_info["duration_s"] = round(session_info["ended_at"] - session_info["started_at"], 3)
@@ -75,6 +82,7 @@ def build_report_data(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         "signals": signals,
         "sandbox_resources": resources,
         "sandbox_crashes": crashes,
+        "contract": contract_info,
     }
 
 
@@ -108,7 +116,22 @@ def render_text(data: Dict[str, Any], color: bool = False) -> str:
         line = _paint(line, _RED, color)
         lines.append(line)
 
-    return "\n".join(lines) + "\n"
+    contract = data.get("contract")
+    if contract and contract.get("verdict"):
+        cv = contract["verdict"]
+        passed = cv.get("passed", False)
+        status_str = _paint("PASSED", "[32m", color) if passed else _paint("FAILED", _RED, color)
+        lines.append(f"\n--- Task Contract: {status_str} ---")
+        lines.append(f"  Summary: {cv.get('summary', '')}")
+        if cv.get("budget_exceeded"):
+            b = cv["budget_exceeded"]
+            lines.append(_paint(f"  [!] Budget exceeded: {b.get('limit')} ({b.get('actual')} > {b.get('budget')})", _RED, color))
+        for a in cv.get("assertions", []):
+            a_ok = a.get("passed", False)
+            mark = _paint("[✓]", "[32m", color) if a_ok else _paint("[✗]", _RED, color)
+            lines.append(f"  {mark} {a.get('name')}: {a.get('details', '')}")
+
+    return "\n".join(lines) + "\n" 
 
 
 def render_json(data: Dict[str, Any]) -> str:
@@ -224,6 +247,38 @@ def render_html(data: Dict[str, Any]) -> str:
                 f'(exit {c.get("exit_code")}, oom={c.get("oom_killed")})'
                 f'</div>'
             )
+        out.append("</section>")
+
+    contract = data.get("contract")
+    if contract and contract.get("verdict"):
+        cv = contract["verdict"]
+        passed = cv.get("passed", False)
+        badge_cls = "badge-ok" if passed else "badge-err"
+        badge_txt = "PASSED" if passed else "FAILED"
+        out.append(f'<section><h2>Task Contract <span class="badge {badge_cls}">{badge_txt}</span></h2>')
+        out.append(f'<p style="margin-bottom: 0.75rem;"><strong>Summary:</strong> {html.escape(str(cv.get("summary", "")))}</p>')
+        if cv.get("budget_exceeded"):
+            b = cv["budget_exceeded"]
+            out.append(
+                f'<div class="signal-box critical" style="margin-bottom: 0.75rem;">'
+                f'<strong>Budget Exceeded:</strong> {html.escape(str(b.get("limit")))} '
+                f'({b.get("actual")} &gt; {b.get("budget")})'
+                '</div>'
+            )
+        if cv.get("assertions"):
+            out.append('<div class="timeline">')
+            for a in cv["assertions"]:
+                a_ok = a.get("passed", False)
+                a_badge = "badge-ok" if a_ok else "badge-err"
+                a_mark = "✓" if a_ok else "✗"
+                out.append(
+                    f'<div class="step-card"><div class="step-header">'
+                    f'<div><span class="badge {a_badge}">{a_mark}</span> '
+                    f'<strong>{html.escape(str(a.get("name", "")))}</strong></div>'
+                    f'<span class="step-meta">{html.escape(str(a.get("details", "")))}</span>'
+                    '</div></div>'
+                )
+            out.append('</div>')
         out.append("</section>")
 
     out.append("<section><h2>Step Timeline</h2><div class=\"timeline\">")
