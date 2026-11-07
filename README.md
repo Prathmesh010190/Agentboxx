@@ -284,6 +284,66 @@ The log format is documented in [docs/log-format.md](docs/log-format.md) and des
 - [ ] Session replay UI
 - [ ] Threshold calibration on recorded sessions
 
+## Live Model Execution & Task Contracts
+
+You can connect real LLMs (Gemini, Claude, etc.) directly to Agentboxx with host-side task contracts:
+
+```python
+import os
+from agentbox import (
+    Recorder,
+    TaskContract,
+    assert_file_exists,
+    assert_file_contains,
+)
+from agentbox.agent import GeminiModel, run_agent
+
+# 1. Define a verifiable Task Contract
+contract = TaskContract(
+    task_id="prime-calculation",
+    description="Calculate prime sum and write to file",
+    max_steps=10,
+    max_duration_s=60.0,
+    assertions=[
+        assert_file_exists("prime_sum.py"),
+        assert_file_exists("result.txt"),
+        assert_file_contains("result.txt", "1060"),
+    ],
+)
+
+# 2. Set up Recorder
+rec = Recorder(
+    session_id="my-run",
+    workspace="./workspace",
+    contract=contract,
+)
+
+# 3. Run with live Gemini model (requires GEMINI_API_KEY)
+model = GeminiModel(model="gemini-2.5-flash")
+goal = "Write prime_sum.py to sum primes under 100, save to result.txt, and run it."
+
+try:
+    result = run_agent(goal, model, rec)
+finally:
+    rec.close("Finished")
+```
+
+### Inspect and Verify the Run
+
+```bash
+# View terminal summary with Task Contract verdict
+agentbox report ./runs/my-run.ndjson
+
+# Generate interactive HTML dashboard
+agentbox report ./runs/my-run.ndjson --format html -o report.html
+
+# Cryptographically verify the tamper-evident hash chain
+agentbox verify ./runs/my-run.ndjson
+
+# Verify using a custom key file (if key_path was customized)
+agentbox verify ./runs/my-run.ndjson -k ./runs/key
+```
+
 ## Contributing
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the issues labeled [`good first issue`](https://github.com/Prathmesh010190/Agentboxx/labels/good%20first%20issue).
