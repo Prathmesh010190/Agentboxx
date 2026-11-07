@@ -94,20 +94,28 @@ def build_observation(cmd, code, out, err, timed_out, exceeded, workspace, durat
 
 
 def _find_bash() -> str:
-    """Find a real bash executable, avoiding the Windows WSL stub in System32."""
+    """Find a real bash executable, avoiding the Windows WSL stub in System32 / WindowsApps."""
     if sys.platform == "win32" or os.name == "nt":
-        for candidate in [
-            "C:/Program Files/Git/bin/bash.exe",
-            "C:/Program Files/Git/usr/bin/bash.exe",
-            "C:/Program Files (x86)/Git/bin/bash.exe",
-            "C:/Program Files (x86)/Git/usr/bin/bash.exe",
-        ]:
-            if os.path.exists(candidate):
+        local_appdata = os.environ.get("LOCALAPPDATA", "")
+        program_files = os.environ.get("ProgramFiles", "C:/Program Files")
+        program_files_x86 = os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")
+        candidates = [
+            f"{program_files}/Git/bin/bash.exe",
+            f"{program_files}/Git/usr/bin/bash.exe",
+            f"{program_files_x86}/Git/bin/bash.exe",
+            f"{program_files_x86}/Git/usr/bin/bash.exe",
+            f"{local_appdata}/Programs/Git/bin/bash.exe",
+            f"{local_appdata}/Programs/Git/usr/bin/bash.exe",
+        ]
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
                 return candidate
 
         found = shutil.which("bash")
-        if found and "system32" not in found.lower():
+        if found and not any(stub in found.lower() for stub in ("system32", "windowsapps")):
             return found
+
+        return "bash"
 
     return shutil.which("bash") or "bash"
 
