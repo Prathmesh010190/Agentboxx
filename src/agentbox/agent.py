@@ -4,10 +4,19 @@ Loop: model proposes a command -> sandbox runs it -> recorder logs it ->
 the observation (plus any loop-detector hint) goes back to the model.
 """
 import json
+import os
 import sys
+import urllib.error
+import urllib.request
+
+
+def _get_platform_py() -> str:
+    return "python" if sys.platform == "win32" else "python3"
+
 
 SYSTEM_PROMPT = (
-    "You are a coding agent working in a sandbox with a bash tool. "
+    f"You are a coding agent working in a sandbox with a bash tool. "
+    f"IMPORTANT: Use '{_get_platform_py()}' to execute Python scripts. "
     "Reply with ONLY one JSON object, no other text. "
     'To run a command: {"thought": "why", "command": "bash command"}. '
     'When the goal is done: {"thought": "why", "final": "short answer"}. '
@@ -20,17 +29,14 @@ class ScriptedModel:
     changes approach once it receives an [agentbox hint]."""
 
     def __init__(self, python_cmd: str | None = None):
-        if python_cmd is None:
-            # On Windows, python3 is a Windows Store stub; standard python is "python"
-            python_cmd = "python" if sys.platform == "win32" else "python3"
-        self.python_cmd = python_cmd
+        self.python_cmd = python_cmd or _get_platform_py()
         self.plan = [
             ("Create a small script.", "printf 'x = 0\\nprint(10 / x)\\n' > main.py"),
-            ("Run it.", f"{python_cmd} main.py"),
+            ("Run it.", f"{self.python_cmd} main.py"),
         ]
         self.recovery = [
             ("The hint is right: x = 0 causes the crash. Fix the value.", "sed -i 's/x = 0/x = 2/' main.py"),
-            ("Run it again.", f"{python_cmd} main.py"),
+            ("Run it again.", f"{self.python_cmd} main.py"),
             ("DONE", None),
         ]
         self.i, self.recovering = 0, False
@@ -55,8 +61,12 @@ class AnthropicModel:
         self.client, self.model = anthropic.Anthropic(), model
 
     def next_action(self, messages):
-        r = self.client.messages.create(model=self.model, max_tokens=1000,
-                                        system=SYSTEM_PROMPT, messages=messages)
+        r = self.client.messages.create(
+            model=self.model,
+            max_tokens=1000,
+            system=SYSTEM_PROMPT,
+            messages=messages,
+        )
         text = r.content[0].text.strip()
         if text.startswith("```"):
             text = text.strip("`").removeprefix("json").strip()
@@ -66,14 +76,13 @@ class AnthropicModel:
             return {"thought": "unparseable reply", "final": text[:500]}
 
 
-
 class GeminiModel:
-    """Real model via the Google Gemini REST API (stdlib only, no SDK needed).
+    """Real model via Google Gemini REST API (stdlib only, no extra SDK needed).
+    Supports thinking tokens and multi-part candidate responses.
     Needs the GEMINI_API_KEY environment variable."""
 
-    def __init__(self, model="gemini-flash-lite-latest"):
-        import os
-        key = os.environ.get("GEMINI_API_KEY")
+    def __init__(self, model="gemini-2.5-flash"):
+        key = os.environ.get("GEMINI_API_KEY", "").strip()
         if not key:
             raise RuntimeError("set the GEMINI_API_KEY environment variable")
         self._model = model
@@ -83,24 +92,55 @@ class GeminiModel:
         )
 
     def next_action(self, messages):
-        import urllib.request
         contents = []
         for m in messages:
             role = "model" if m["role"] == "assistant" else "user"
             contents.append({"role": role, "parts": [{"text": m["content"]}]})
+
         body = json.dumps({
             "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
             "contents": contents,
         }).encode("utf-8")
+
         req = urllib.request.Request(
-            self._url, data=body,
+            self._url,
+            data=body,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read())
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            raw_err = e.read().decode()
+            try:
+                err_json = json.loads(raw_err)
+                msg = err_json.get("error", {}).get("message", raw_err)
+            except Exception:
+                msg = raw_err
+            raise RuntimeError(f"Gemini API error (HTTP {e.code}): {msg}") from e
+
+        candidates = data.get("candidates", [])
+        if not candidates:
+            return {"thought": "No candidates returned by model", "final": "Stopped: empty response"}
+
+        candidate = candidates[0]
+        parts = candidate.get("content", {}).get("parts", [])
+        if not parts:
+            reason = candidate.get("finishReason", "unknown")
+            return {"thought": f"No content returned ({reason})", "final": f"Stopped: {reason}"}
+
+        # Filter out internal thinking tokens to find the actionable text
+        text = ""
+        for p in parts:
+            if "text" in p and not p.get("thought", False):
+                text = p["text"].strip()
+        if not text and parts:
+            text = parts[-1].get("text", "").strip()
+
         if text.startswith("```"):
             text = text.strip("`").removeprefix("json").strip()
+
         try:
             return json.loads(text)
         except json.JSONDecodeError:
@@ -108,9 +148,11 @@ class GeminiModel:
 
 
 def _format_observation(obs: dict) -> str:
-    return (f"exit_code={obs['exit_code']}\n"
-            f"stdout:\n{obs['stdout']['text'][-1500:]}\n"
-            f"stderr:\n{obs['stderr']['text'][-1500:]}")
+    return (
+        f"exit_code={obs['exit_code']}\n"
+        f"stdout:\n{obs['stdout']['text'][-1500:]}\n"
+        f"stderr:\n{obs['stderr']['text'][-1500:]}"
+    )
 
 
 def run_agent(goal, model, recorder, max_steps=15, verbose=True) -> dict:
