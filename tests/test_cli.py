@@ -216,3 +216,13 @@ def test_demo_without_bash_is_a_clear_error(monkeypatch, capsys):
     monkeypatch.setattr(shutil, "which", lambda name: None)
     assert cli.main(["demo"]) == cli.EXIT_ERROR
     assert "PATH" in capsys.readouterr().err
+
+def test_demo_rejects_windowsapps_bash_stub(monkeypatch, capsys):
+    import sys
+    from agentbox import executor
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(shutil, "which", lambda name: "C:\\Users\\app\\AppData\\Local\\Microsoft\\WindowsApps\\bash.EXE" if name == "bash" else "/usr/bin/python")
+    monkeypatch.setattr(executor.os.path, "exists", lambda p: False)
+    assert cli.main(["demo"]) == cli.EXIT_ERROR
+    assert "bash" in capsys.readouterr().err
+

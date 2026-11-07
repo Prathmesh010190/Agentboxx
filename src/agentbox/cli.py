@@ -239,11 +239,17 @@ def cmd_list(args) -> int:
 def cmd_demo(args) -> int:
     """Run the scripted stuck-agent scenario in a temp directory (local backend, no Docker)."""
     from .agent import ScriptedModel, run_agent
+    from .executor import _find_bash
     from .recorder import Recorder
 
-    missing = [t for t in ("bash", "python3") if shutil.which(t) is None]
-    if missing:
-        raise CliError("the demo needs " + " and ".join(missing) + " on your PATH")
+    bash = _find_bash()
+    bash_ok = bool(bash and (os.path.exists(bash) or (shutil.which(bash) and not any(s in (shutil.which(bash) or "").lower() for s in ("system32", "windowsapps")))))
+    if not bash_ok:
+        raise CliError("the demo needs bash on your PATH (install Git for Windows)")
+
+    py_target = "python" if sys.platform == "win32" else "python3"
+    if shutil.which(py_target) is None and shutil.which("python") is None and shutil.which("python3") is None:
+        raise CliError(f"the demo needs {py_target} on your PATH")
     with tempfile.TemporaryDirectory(prefix="agentbox-demo-") as tmp:
         tmp = Path(tmp)
         key_path = tmp / "key"              # throwaway key: the demo never touches ~/.agentbox

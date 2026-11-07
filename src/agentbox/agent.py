@@ -4,6 +4,7 @@ Loop: model proposes a command -> sandbox runs it -> recorder logs it ->
 the observation (plus any loop-detector hint) goes back to the model.
 """
 import json
+import sys
 
 SYSTEM_PROMPT = (
     "You are a coding agent working in a sandbox with a bash tool. "
@@ -18,14 +19,18 @@ class ScriptedModel:
     """A fake model for demos and tests. Retries a failing command, then
     changes approach once it receives an [agentbox hint]."""
 
-    def __init__(self):
+    def __init__(self, python_cmd: str | None = None):
+        if python_cmd is None:
+            # On Windows, python3 is a Windows Store stub; standard python is "python"
+            python_cmd = "python" if sys.platform == "win32" else "python3"
+        self.python_cmd = python_cmd
         self.plan = [
             ("Create a small script.", "printf 'x = 0\\nprint(10 / x)\\n' > main.py"),
-            ("Run it.", "python3 main.py"),
+            ("Run it.", f"{python_cmd} main.py"),
         ]
         self.recovery = [
             ("The hint is right: x = 0 causes the crash. Fix the value.", "sed -i 's/x = 0/x = 2/' main.py"),
-            ("Run it again.", "python3 main.py"),
+            ("Run it again.", f"{python_cmd} main.py"),
             ("DONE", None),
         ]
         self.i, self.recovering = 0, False
