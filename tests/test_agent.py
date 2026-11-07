@@ -1,7 +1,12 @@
 from agentbox import Recorder, verify_file
 from agentbox.agent import ScriptedModel, run_agent
 from agentbox.signer import load_or_create_key
-
+import json
+import urllib.error
+from io import BytesIO
+from unittest.mock import MagicMock, patch
+import pytest
+from agentbox.agent import GeminiModel, _get_platform_py, SYSTEM_PROMPT
 
 def test_agent_gets_hint_and_recovers(tmp_path):
     key = tmp_path / "key"
@@ -30,12 +35,6 @@ def test_scripted_model_platform_defaults(monkeypatch):
     assert any("python3 main.py" in step[1] for step in m_lin.plan if step[1])
 
 
-import json
-import urllib.error
-from io import BytesIO
-from unittest.mock import MagicMock, patch
-import pytest
-from agentbox.agent import GeminiModel, _get_platform_py, SYSTEM_PROMPT
 
 
 def test_platform_py_hint():
